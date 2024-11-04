@@ -1,36 +1,42 @@
 
+CREATE SEQUENCE anime_pages_id_seq;
+
 CREATE TABLE anime_pages (
-    id SERIAL PRIMARY KEY NOT NULL,
+    id INT DEFAULT nextval('anime_pages_id_seq') PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL
+    description TEXT NOT NULL,
+	CHECK (TRIM(title) <> ''),
+	CHECK (TRIM(description) <> '')
 );
 
-INSERT INTO anime_pages (title, description) VALUES
-    ('Naruto', 'Description1'),
-    ('Naruto Uzumaki', 'Description2'),
-    ('Bleach', 'Description3'),
-    ('One Piece', 'Description4'),
-    ('Roronoa Zoro', 'Description5'),
-    ('Monkey D. Luffy', 'Description6'),
-    ('Jujutsu Kaisen', 'Description7'),
-    ('Gojo Satoru', 'Description8'),
-    ('Gon Frix', 'Description9'),
-    ('Killua Zoldic', 'Description10'),
-    ('Hunter x Hunter', 'Description11'),
-    ('Fullmetal Alchemist: Brotherhood', 'Description12'),
-    ('Steins;Gate', 'Description13'),
-    ('Gintama', 'Description14'),
-    ('Monster', 'Description15'),
-    ('Fairy Tail', 'Description16'),
-    ('Kurapika', 'Description17'),
-    ('Aizen Sosuke', 'Description18'),
-    ('Ichigo Kurosaki', 'Description19'),
-    ('Happy', 'Description20');
+INSERT INTO anime_pages (id, title, description) VALUES
+    (1,'Naruto', 'Description1'),
+    (2,'Naruto Uzumaki', 'Description2'),
+    (3,'Bleach', 'Description3'),
+    (4,'One Piece', 'Description4'),
+    (5,'Roronoa Zoro', 'Description5'),
+    (6,'Monkey D. Luffy', 'Description6'),
+    (7,'Jujutsu Kaisen', 'Description7'),
+    (8,'Gojo Satoru', 'Description8'),
+    (9,'Gon Frix', 'Description9'),
+    (10,'Killua Zoldic', 'Description10'),
+    (11,'Hunter x Hunter', 'Description11'),
+    (12,'Fullmetal Alchemist: Brotherhood', 'Description12'),
+    (13,'Steins;Gate', 'Description13'),
+    (14,'Gintama', 'Description14'),
+    (15,'Monster', 'Description15'),
+    (16,'Fairy Tail', 'Description16'),
+    (17,'Kurapika', 'Description17'),
+    (18,'Aizen Sosuke', 'Description18'),
+    (19,'Ichigo Kurosaki', 'Description19'),
+    (20,'Happy', 'Description20');
+
+SELECT setval('anime_pages_id_seq', COALESCE((SELECT MAX(id)  FROM anime_pages), 0));
 
 CREATE TABLE anime (
-    id INT PRIMARY KEY,
-    release_date DATE NOT NULL,
-    episode_count INT NOT NULL,
+    id INT PRIMARY KEY NOT NULL,
+    release_date DATE CHECK (release_date >= '1900-01-01' AND release_date <= CURRENT_DATE),
+    episode_count INT CHECK (episode_count >= 0 AND episode_count < 15000),
     FOREIGN KEY (id) REFERENCES anime_pages(id)
 );
 
@@ -48,9 +54,10 @@ INSERT INTO anime (id,release_date, episode_count) VALUES
 
 CREATE TABLE characters (
     id INT PRIMARY KEY,
-    age INT NOT NULL,
+    age INT CHECK(age > 0),
     biography TEXT NOT NULL,
-    FOREIGN KEY (id) REFERENCES anime_pages(id)
+    FOREIGN KEY (id) REFERENCES anime_pages(id),
+	CHECK (TRIM(biography) <> '')
 );
 
 INSERT INTO characters (id, age, biography) VALUES
@@ -65,23 +72,28 @@ INSERT INTO characters (id, age, biography) VALUES
     (19,27, 'Биография'), -- Ichigo Kurosaki
     (20,6, 'Биография'); -- Happy
 
+CREATE SEQUENCE genres_id_seq START WITH 11;
 CREATE TABLE genres (
-	id SERIAL PRIMARY KEY NOT NULL,
+	id INT DEFAULT nextval('genres_id_seq') PRIMARY KEY,
 	title VARCHAR(255) NOT NULL, 
-	description TEXT NOT NULL
+	description TEXT NOT NULL,
+	CHECK (TRIM(title) <> ''),
+	CHECK (TRIM(description) <> '')
 );
 
-INSERT INTO genres (title, description) VALUES
-	('Комендия', 'Описание'),
-	('Романтика', 'Описание'),
-	('Детектив', 'Описание'),
-	('Драма', 'Описание'),
-	('Повседневность', 'Описание'),
-	('Боевик', 'Описание'),
-	('Сёнен', 'Описание'),
-	('Сёдзё', 'Описание'),
-	('Сэйнэн', 'Описание'),
-	('Меха', 'Описание');
+INSERT INTO genres (id, title, description) VALUES
+	(1,'Комендия', 'Описание'),
+	(2,'Романтика', 'Описание'),
+	(3,'Детектив', 'Описание'),
+	(4,'Драма', 'Описание'),
+	(5,'Повседневность', 'Описание'),
+	(6,'Боевик', 'Описание'),
+	(7,'Сёнен', 'Описание'),
+	(8,'Сёдзё', 'Описание'),
+	(9,'Сэйнэн', 'Описание'),
+	(10,'Меха', 'Описание');
+
+SELECT setval('genres_id_seq', COALESCE((SELECT MAX(id)  FROM genres), 0));
 
 CREATE TABLE anime_genres (
 	anime_id INT NOT NULL,
@@ -123,45 +135,54 @@ INSERT INTO anime_characters (anime_id, character_id) VALUES
 (11, 17),
 (16, 20);
 
-
+CREATE SEQUENCE users_id_seq START WITH 11;
 CREATE TABLE users (
-	id SERIAL PRIMARY KEY NOT NULL,
-	username VARCHAR(32) NOT NULL,
-	email VARCHAR(64) NOT NULL,
+	id INT DEFAULT nextval('users_id_seq') PRIMARY KEY,
+	username VARCHAR(32) UNIQUE NOT NULL,
+	email VARCHAR(64) UNIQUE NOT NULL,
 	password VARCHAR(64) NOT NULL,
-	created_at DATE NOT NULL
+	created_at DATE CHECK (created_at >= '1990-01-01' AND created_at <= CURRENT_DATE),
+	CHECK (TRIM(username) <> ''),
+	CHECK (TRIM(email) <> ''),
+	
 );
 
-INSERT INTO users (username, email, password, created_at) VALUES
-	('user1', 'primer1@gmail.com', 'password1', '2024-01-10'),
-	('user2', 'primer2@gmail.com', 'password2', '2000-02-10'),
-	('user3', 'primer3@gmail.com', 'password3', '2015-03-10'),
-	('user4', 'primer4@gmail.com', 'password4', '2024-04-10'),
-	('user5', 'primer5@gmail.com', 'password5', '2024-05-10'),
-	('user6', 'primer6@gmail.com', 'password6', '2020-06-10'),
-	('user7', 'primer7@gmail.com', 'password7', '2024-07-02'),
-	('user8', 'primer8@gmail.com', 'password8', '2020-08-10'),
-	('user9', 'primer9@gmail.com', 'password9', '2023-01-09'),
-	('user10', 'primer10@gmail.com','password10','2024-01-10');
+INSERT INTO users (id, username, email, password, created_at) VALUES
+	(1,'user1', 'primer1@gmail.com', 'password1', '2024-01-10'),
+	(2,'user2', 'primer2@gmail.com', 'password2', '2000-02-10'),
+	(3,'user3', 'primer3@gmail.com', 'password3', '2015-03-10'),
+	(4,'user4', 'primer4@gmail.com', 'password4', '2024-04-10'),
+	(5,'user5', 'primer5@gmail.com', 'password5', '2024-05-10'),
+	(6,'user6', 'primer6@gmail.com', 'password6', '2020-06-10'),
+	(7,'user7', 'primer7@gmail.com', 'password7', '2024-07-02'),
+	(8,'user8', 'primer8@gmail.com', 'password8', '2020-08-10'),
+	(9,'user9', 'primer9@gmail.com', 'password9', '2023-01-09'),
+	(10,'user10', 'primer10@gmail.com','password10','2024-01-10');
 
+SELECT setval('users_id_seq', COALESCE((SELECT MAX(id)  FROM users), 0));
+
+CREATE SEQUENCE reviews_id_seq START WITH 11;
 CREATE TABLE reviews (
-	id SERIAL PRIMARY KEY NOT NULL,
+	id INT DEFAULT nextval('reviews_id_seq') PRIMARY KEY,
 	animes_pages_id INT NOT NULL,
 	users_id INT NOT NULL,
 	comment TEXT NOT NULL,
-	created_at DATE NOT NULL,
+	created_at DATE CHECK (created_at >= '1990-01-01' AND created_at <= CURRENT_DATE),
 	FOREIGN KEY (animes_pages_id) REFERENCES anime_pages(id),
-	FOREIGN KEY (users_id) REFERENCES users(id)
+	FOREIGN KEY (users_id) REFERENCES users(id),
+	CHECK (TRIM(comment) <> '')
 );
 
-INSERT INTO reviews(animes_pages_id, users_id, comment, created_at) VALUES
-	(1, 1, 'comment1', '2024-01-01'),
-	(2, 1, 'comment2', '2024-02-01'),
-	(3, 2, 'comment3', '2024-03-01'),
-	(4, 2, 'comment4', '2024-04-01'),
-	(5, 2, 'comment5', '2024-05-01'),
-	(6, 5, 'comment6', '2024-06-01'),
-	(7, 6, 'comment7','2024-07-01'),
-	(8, 9, 'comment8','2024-08-01'),
-	(9, 10,'comment9','2024-09-01'),
-	(10, 10,'comment10','2024-10-01');
+INSERT INTO reviews(id, animes_pages_id, users_id, comment, created_at) VALUES
+	(1, 1, 1, 'comment1', '2024-01-01'),
+	(2, 2, 1, 'comment2', '2024-02-01'),
+	(3, 5, 2, 'comment3', '2024-03-01'),
+	(4, 5, 2, 'comment4', '2024-04-01'),
+	(5, 5, 2, 'comment5', '2024-05-01'),
+	(6, 6, 5, 'comment6', '2024-06-01'),
+	(7, 7, 6, 'comment7','2024-07-01'),
+	(8, 8, 9, 'comment8','2024-08-01'),
+	(9, 8, 10,'comment9','2024-09-01'),
+	(10, 10, 10,'comment10','2024-10-01');
+
+SELECT setval('reviews_id_seq', COALESCE((SELECT MAX(id)  FROM reviews), 0));
