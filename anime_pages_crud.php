@@ -1,6 +1,8 @@
 <?php
 
 class AnimePagesCRUD {
+    
+    
     private $pdo;
 
     public function __construct($dbConfig) {
@@ -49,22 +51,25 @@ class AnimePagesCRUD {
 }
 
 function main() {
+    
     // Конфигурация базы данных
     $dbConfig = [
-        'host' => 'localhost',
+        'host' => 'dpg-csac7fqj1k6c73co0e20-a.oregon-postgres.render.com',
         'port' => '5432',
-        'dbname' => 'your_database_name',
-        'user' => 'your_username',
-        'password' => 'your_password'
+        'dbname' => 'arddb_pplh',
+        'user' => 'ardan',
+        'password' => 'IgrjsegKgHZ8WR84zQyWAe92Az3Q8ooT'
     ];
+    
 
     // Создаем экземпляр класса
     $crud = new AnimePagesCRUD($dbConfig);
-
+    
     while (true) {
         echo "\n1. Create\n2. Retrieve All\n3. Retrieve\n4. Update\n5. Delete\n6. Delete Many\n7. Exit\n";
-        $choice = readline("Choose an option: ");
 
+        $choice = readline("Choose an option: ");
+        
         switch ($choice) {
             case '1':
                 $title = readline("Enter title: ");
