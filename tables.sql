@@ -72,7 +72,7 @@ INSERT INTO characters (id, age, biography) VALUES
     (19,27, 'Биография'), -- Ichigo Kurosaki
     (20,6, 'Биография'); -- Happy
 
-CREATE SEQUENCE genres_id_seq START WITH 11;
+CREATE SEQUENCE genres_id_seq;
 CREATE TABLE genres (
 	id INT DEFAULT nextval('genres_id_seq') PRIMARY KEY,
 	title VARCHAR(255) NOT NULL, 
@@ -135,20 +135,19 @@ INSERT INTO anime_characters (anime_id, character_id) VALUES
 (11, 17),
 (16, 20);
 
-CREATE SEQUENCE users_id_seq START WITH 11;
+CREATE SEQUENCE users_id_seq;
 CREATE TABLE users (
 	id INT DEFAULT nextval('users_id_seq') PRIMARY KEY,
-	username VARCHAR(32) UNIQUE NOT NULL,
+	username VARCHAR(32) NOT NULL,
 	email VARCHAR(64) UNIQUE NOT NULL,
 	password VARCHAR(64) NOT NULL,
-	created_at DATE CHECK (created_at >= '1990-01-01' AND created_at <= CURRENT_DATE),
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	CHECK (TRIM(username) <> ''),
-	CHECK (TRIM(email) <> ''),
-	
+	CHECK (TRIM(email) <> '')
 );
 
 INSERT INTO users (id, username, email, password, created_at) VALUES
-	(1,'user1', 'primer1@gmail.com', 'password1', '2024-01-10'),
+	(1,'user1', 'primer1@gmail.com', 'password1', '2024-01-10 00:00:00'),
 	(2,'user2', 'primer2@gmail.com', 'password2', '2000-02-10'),
 	(3,'user3', 'primer3@gmail.com', 'password3', '2015-03-10'),
 	(4,'user4', 'primer4@gmail.com', 'password4', '2024-04-10'),
@@ -161,13 +160,13 @@ INSERT INTO users (id, username, email, password, created_at) VALUES
 
 SELECT setval('users_id_seq', COALESCE((SELECT MAX(id)  FROM users), 0));
 
-CREATE SEQUENCE reviews_id_seq START WITH 11;
+CREATE SEQUENCE reviews_id_seq;
 CREATE TABLE reviews (
 	id INT DEFAULT nextval('reviews_id_seq') PRIMARY KEY,
 	animes_pages_id INT NOT NULL,
 	users_id INT NOT NULL,
 	comment TEXT NOT NULL,
-	created_at DATE CHECK (created_at >= '1990-01-01' AND created_at <= CURRENT_DATE),
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (animes_pages_id) REFERENCES anime_pages(id),
 	FOREIGN KEY (users_id) REFERENCES users(id),
 	CHECK (TRIM(comment) <> '')
