@@ -2,14 +2,14 @@
 CREATE SEQUENCE anime_page_id_seq;
 
 CREATE TABLE anime_pages (
-    id INT DEFAULT nextval('anime_page_id_seq') PRIMARY KEY,
+    anime_page_id INT DEFAULT nextval('anime_page_id_seq') PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
 	CHECK (TRIM(title) <> ''),
 	CHECK (TRIM(description) <> '')
 );
 
-INSERT INTO anime_pages (id, title, description) VALUES
+INSERT INTO anime_pages (anime_page_id, title, description) VALUES
     (1,'Naruto', 'Description1'),
     (2,'Naruto Uzumaki', 'Description2'),
     (3,'Bleach', 'Description3'),
@@ -31,16 +31,16 @@ INSERT INTO anime_pages (id, title, description) VALUES
     (19,'Ichigo Kurosaki', 'Description19'),
     (20,'Happy', 'Description20');
 
-SELECT setval('anime_page_id_seq', COALESCE((SELECT MAX(id)  FROM anime_pages), 0));
+SELECT setval('anime_page_id_seq', COALESCE((SELECT MAX(anime_page_id)  FROM anime_pages), 0));
 
 CREATE TABLE anime (
-    id INT PRIMARY KEY NOT NULL,
+    anime_id INT PRIMARY KEY NOT NULL,
     release_date DATE CHECK (release_date >= '1900-01-01' AND release_date <= CURRENT_DATE),
     episode_count INT CHECK (episode_count >= 0 AND episode_count < 15000),
-    FOREIGN KEY (id) REFERENCES anime_pages(id)
+    FOREIGN KEY (anime_id) REFERENCES anime_pages(anime_page_id)
 );
 
-INSERT INTO anime (id,release_date, episode_count) VALUES
+INSERT INTO anime (anime_id, release_date, episode_count) VALUES
     (1,'1999-09-21', 720), -- Naruto
     (3,'2004-10-05', 396), -- Bleach
     (4,'1999-10-20', 1122), -- One Piece
@@ -53,14 +53,14 @@ INSERT INTO anime (id,release_date, episode_count) VALUES
     (16,'2009-10-12', 328); -- Fairy Tail
 
 CREATE TABLE characters (
-    id INT PRIMARY KEY,
+    character_id INT PRIMARY KEY,
     age INT CHECK(age > 0),
     biography TEXT NOT NULL,
-    FOREIGN KEY (id) REFERENCES anime_pages(id),
+    FOREIGN KEY (character_id) REFERENCES anime_pages(anime_page_id),
 	CHECK (TRIM(biography) <> '')
 );
 
-INSERT INTO characters (id, age, biography) VALUES
+INSERT INTO characters (character_id, age, biography) VALUES
     (2,33, 'Биография'), -- Naruto
     (5,19, 'Биография'), -- Zoro
     (6,21, 'Биография'), -- Luffy
@@ -75,14 +75,14 @@ INSERT INTO characters (id, age, biography) VALUES
 CREATE SEQUENCE genre_id_seq;
 
 CREATE TABLE genres (
-	id INT DEFAULT nextval('genre_id_seq') PRIMARY KEY,
+	genre_id INT DEFAULT nextval('genre_id_seq') PRIMARY KEY,
 	title VARCHAR(255) NOT NULL, 
 	description TEXT NOT NULL,
 	CHECK (TRIM(title) <> ''),
 	CHECK (TRIM(description) <> '')
 );
 
-INSERT INTO genres (id, title, description) VALUES
+INSERT INTO genres (genre_id, title, description) VALUES
 	(1,'Комендия', 'Описание'),
 	(2,'Романтика', 'Описание'),
 	(3,'Детектив', 'Описание'),
@@ -94,14 +94,14 @@ INSERT INTO genres (id, title, description) VALUES
 	(9,'Сэйнэн', 'Описание'),
 	(10,'Меха', 'Описание');
 
-SELECT setval('genre_id_seq', COALESCE((SELECT MAX(id)  FROM genres), 0));
+SELECT setval('genre_id_seq', COALESCE((SELECT MAX(genre_id)  FROM genres), 0));
 
 CREATE TABLE anime_genres (
 	anime_id INT NOT NULL,
 	genre_id INT NOT NULL,
 	PRIMARY KEY (anime_id, genre_id),
-	FOREIGN KEY (anime_id) REFERENCES anime(id),
-	FOREIGN KEY (genre_id) REFERENCES genres(id)
+	FOREIGN KEY (anime_id) REFERENCES anime(anime_id),
+	FOREIGN KEY (genre_id) REFERENCES genres(genre_id)
 );
 
 INSERT INTO anime_genres (anime_id, genre_id) VALUES
@@ -120,8 +120,8 @@ CREATE TABLE anime_characters (
 	anime_id INT NOT NULL,
 	character_id INT NOT NULL,
 	PRIMARY KEY (anime_id, character_id),
-	FOREIGN KEY (anime_id) REFERENCES anime(id),
-	FOREIGN KEY (character_id) REFERENCES characters(id)
+	FOREIGN KEY (anime_id) REFERENCES anime(anime_id),
+	FOREIGN KEY (character_id) REFERENCES characters(character_id)
 );
 
 INSERT INTO anime_characters (anime_id, character_id) VALUES
@@ -139,16 +139,16 @@ INSERT INTO anime_characters (anime_id, character_id) VALUES
 CREATE SEQUENCE user_id_seq;
 
 CREATE TABLE users (
-	id INT DEFAULT nextval('user_id_seq') PRIMARY KEY,
+	user_id INT DEFAULT nextval('user_id_seq') PRIMARY KEY,
 	username VARCHAR(32) NOT NULL,
-	email VARCHAR(64) UNIQUE NOT NULL,
+	email VARCHAR(64) UNIQUE NOT NULL, -- Указать в таблице
 	password VARCHAR(64) NOT NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	CHECK (TRIM(username) <> ''),
 	CHECK (TRIM(email) <> '')
 );
 
-INSERT INTO users (id, username, email, password, created_at) VALUES
+INSERT INTO users (user_id, username, email, password, created_at) VALUES
 	(1,'user1', 'primer1@gmail.com', 'password1', '2024-01-10 00:00:00'),
 	(2,'user2', 'primer2@gmail.com', 'password2', '2000-02-10'),
 	(3,'user3', 'primer3@gmail.com', 'password3', '2015-03-10'),
@@ -160,22 +160,22 @@ INSERT INTO users (id, username, email, password, created_at) VALUES
 	(9,'user9', 'primer9@gmail.com', 'password9', '2023-01-09'),
 	(10,'user10', 'primer10@gmail.com','password10','2024-01-10');
 
-SELECT setval('user_id_seq', COALESCE((SELECT MAX(id)  FROM users), 0));
+SELECT setval('user_id_seq', COALESCE((SELECT MAX(user_id)  FROM users), 0));
 
 CREATE SEQUENCE review_id_seq;
 
 CREATE TABLE reviews (
-	id INT DEFAULT nextval('review_id_seq') PRIMARY KEY,
+	review_id INT DEFAULT nextval('review_id_seq') PRIMARY KEY,
 	anime_page_id INT NOT NULL,
 	user_id INT NOT NULL,
 	comment TEXT NOT NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	FOREIGN KEY (anime_page_id) REFERENCES anime_pages(id),
-	FOREIGN KEY (user_id) REFERENCES users(id),
+	FOREIGN KEY (anime_page_id) REFERENCES anime_pages(anime_page_id),
+	FOREIGN KEY (user_id) REFERENCES users(user_id),
 	CHECK (TRIM(comment) <> '')
 );
 
-INSERT INTO reviews(id, anime_page_id, user_id, comment, created_at) VALUES
+INSERT INTO reviews(review_id, anime_page_id, user_id, comment, created_at) VALUES
 	(1, 1, 1, 'comment1', '2024-01-01'),
 	(2, 2, 1, 'comment2', '2024-02-01'),
 	(3, 5, 2, 'comment3', '2024-03-01'),
@@ -187,4 +187,4 @@ INSERT INTO reviews(id, anime_page_id, user_id, comment, created_at) VALUES
 	(9, 8, 10,'comment9','2024-09-01'),
 	(10, 10, 10,'comment10','2024-10-01');
 
-SELECT setval('review_id_seq', COALESCE((SELECT MAX(id)  FROM reviews), 0));
+SELECT setval('review_id_seq', COALESCE((SELECT MAX(review_id)  FROM reviews), 0));
