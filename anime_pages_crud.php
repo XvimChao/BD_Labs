@@ -25,18 +25,18 @@ class AnimePagesCRUD {
     }
 
     public function retrieve($id) {
-        $stmt = $this->pdo->prepare("SELECT * FROM anime_pages WHERE id = :id");
+        $stmt = $this->pdo->prepare("SELECT * FROM anime_pages WHERE anime_page_id = :id");
         $stmt->execute(['id' => $id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     public function update($id, $title, $description) {
-        $stmt = $this->pdo->prepare("UPDATE anime_pages SET title = :title, description = :description WHERE id = :id");
+        $stmt = $this->pdo->prepare("UPDATE anime_pages SET title = :title, description = :description WHERE anime_page_id = :id");
         $stmt->execute(['id' => $id, 'title' => $title, 'description' => $description]);
     }
 
     public function delete($id) {
-        $stmt = $this->pdo->prepare("DELETE FROM anime_pages WHERE id = :id");
+        $stmt = $this->pdo->prepare("DELETE FROM anime_pages WHERE anime_page_id = :id");
         $stmt->execute(['id' => $id]);
     }
 
@@ -45,7 +45,7 @@ class AnimePagesCRUD {
         
         // Создаем строку с параметрами для запроса
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
-        $stmt = $this->pdo->prepare("DELETE FROM anime_pages WHERE id IN ($placeholders)");
+        $stmt = $this->pdo->prepare("DELETE FROM anime_pages WHERE anime_page_id IN ($placeholders)");
         $stmt->execute($ids);
     }
 }
@@ -54,11 +54,11 @@ function main() {
     
     // Конфигурация базы данных
     $dbConfig = [
-        'host' => 'dpg-csac7fqj1k6c73co0e20-a.oregon-postgres.render.com',
+        'host' => 'localhost',
         'port' => '5432',
-        'dbname' => 'arddb_pplh',
-        'user' => 'ardan',
-        'password' => 'IgrjsegKgHZ8WR84zQyWAe92Az3Q8ooT'
+        'dbname' => 'your_dbname',
+        'user' => 'postgres',
+        'password' => 'ardin2004'
     ];
     
 
@@ -81,7 +81,7 @@ function main() {
             case '2':
                 $pages = $crud->retrieveAll();
                 foreach ($pages as $page) {
-                    echo "ID: {$page['id']}, Title: {$page['title']}, Description: {$page['description']}\n";
+                    echo "ID: {$page['anime_page_id']}, Title: {$page['title']}, Description: {$page['description']}\n";
                 }
                 break;
 
@@ -89,7 +89,7 @@ function main() {
                 $id = (int)readline("Enter ID: ");
                 $page = $crud->retrieve($id);
                 if ($page) {
-                    echo "ID: {$page['id']}, Title: {$page['title']}, Description: {$page['description']}\n";
+                    echo "ID: {$page['anime_page_id']}, Title: {$page['title']}, Description: {$page['description']}\n";
                 } else {
                     echo "Anime page not found.\n";
                 }
