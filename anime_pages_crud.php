@@ -20,7 +20,7 @@ class AnimePagesCRUD {
     }
 
     public function retrieveAll() {
-        $stmt = $this->pdo->query("SELECT * FROM anime_pages");
+        $stmt = $this->pdo->query("SELECT * FROM anime_pages ORDER BY anime_page_id");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -48,6 +48,31 @@ class AnimePagesCRUD {
         $stmt = $this->pdo->prepare("DELETE FROM anime_pages WHERE anime_page_id IN ($placeholders)");
         $stmt->execute($ids);
     }
+
+    public function nameSearch($title, $description, $limit = 5, $offset = 0){
+        $sql = "SELECT * FROM anime_pages";
+        $queryParams = [];
+
+        foreach($searchParams as $key => $value){
+            if(!empty($value)){
+                $sql .= "AND $key =:$key ";
+                $queryParams[":$key"]=$value;
+            }
+        }
+
+        $sql .= "LIMIT :limit OFFSET :offset";
+        $stmt = $this->pdo->prepare($sql);
+
+        $stmt->binValue(':limit',(int)$limit,PDO::PARAM_INT);
+        $stmt->binValue(':offset',(int)$offset,PDO::PARAM_INT);
+
+        foreach($queryParams as $param => $value){
+            $stmt->binValue($param,$value);
+        }
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 
 function main() {
@@ -66,7 +91,7 @@ function main() {
     $crud = new AnimePagesCRUD($dbConfig);
     
     while (true) {
-        echo "\n1. Create\n2. Retrieve All\n3. Retrieve\n4. Update\n5. Delete\n6. Delete Many\n7. Exit\n";
+        echo "\n1. Create\n2. Retrieve All\n3. Retrieve\n4. Update\n5. Delete\n6. Delete Many\n7. nameSearch\n8. Exit\n";
 
         $choice = readline("Choose an option: ");
         
@@ -132,6 +157,16 @@ function main() {
                 break;
 
             case '7':
+                $title = readline("Enter title: ");
+                $description = readline("Enter description: ");
+                $searchParams = [
+                    'title' => 'N',
+                    'description' => 'N'
+                ];
+                $results=$crud->nameSearch($searchParams,5,0);
+                print_r($results);
+
+            case '8':
                 exit("Exiting...\n");
 
             default:
