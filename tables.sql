@@ -37,7 +37,7 @@ CREATE TABLE anime (
     anime_id INT PRIMARY KEY NOT NULL,
     release_date DATE CHECK (release_date >= '1900-01-01' AND release_date <= CURRENT_DATE),
     episode_count INT CHECK (episode_count >= 0 AND episode_count < 15000),
-    FOREIGN KEY (anime_id) REFERENCES anime_pages(anime_page_id)
+    FOREIGN KEY (anime_id) REFERENCES anime_pages(anime_page_id) ON DELETE CASCADE
 );
 
 INSERT INTO anime (anime_id, release_date, episode_count) VALUES
@@ -53,10 +53,10 @@ INSERT INTO anime (anime_id, release_date, episode_count) VALUES
     (16,'2009-10-12', 328); -- Fairy Tail
 
 CREATE TABLE characters (
-    character_id INT PRIMARY KEY,
+    character_id INT PRIMARY KEY NOT NULL,
     age INT CHECK(age > 0),
     biography TEXT NOT NULL,
-    FOREIGN KEY (character_id) REFERENCES anime_pages(anime_page_id),
+    FOREIGN KEY (character_id) REFERENCES anime_pages(anime_page_id) ON DELETE CASCADE,
 	CHECK (TRIM(biography) <> '')
 );
 
@@ -100,8 +100,8 @@ CREATE TABLE anime_genres (
 	anime_id INT NOT NULL,
 	genre_id INT NOT NULL,
 	PRIMARY KEY (anime_id, genre_id),
-	FOREIGN KEY (anime_id) REFERENCES anime(anime_id),
-	FOREIGN KEY (genre_id) REFERENCES genres(genre_id)
+	FOREIGN KEY (anime_id) REFERENCES anime(anime_id) ON DELETE CASCADE,
+	FOREIGN KEY (genre_id) REFERENCES genres(genre_id) ON DELETE SET NULL
 );
 
 INSERT INTO anime_genres (anime_id, genre_id) VALUES
@@ -120,8 +120,8 @@ CREATE TABLE anime_characters (
 	anime_id INT NOT NULL,
 	character_id INT NOT NULL,
 	PRIMARY KEY (anime_id, character_id),
-	FOREIGN KEY (anime_id) REFERENCES anime(anime_id),
-	FOREIGN KEY (character_id) REFERENCES characters(character_id)
+	FOREIGN KEY (anime_id) REFERENCES anime(anime_id) ON DELETE CASCADE,
+	FOREIGN KEY (character_id) REFERENCES characters(character_id) ON DELETE CASCADE
 );
 
 INSERT INTO anime_characters (anime_id, character_id) VALUES
@@ -170,8 +170,8 @@ CREATE TABLE reviews (
 	user_id INT NOT NULL,
 	comment TEXT NOT NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	FOREIGN KEY (anime_page_id) REFERENCES anime_pages(anime_page_id),
-	FOREIGN KEY (user_id) REFERENCES users(user_id),
+	FOREIGN KEY (anime_page_id) REFERENCES anime_pages(anime_page_id) ON DELETE CASCADE,
+	FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
 	CHECK (TRIM(comment) <> '')
 );
 

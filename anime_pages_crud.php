@@ -15,8 +15,16 @@ class AnimePagesCRUD {
     }
 
     public function create($title, $description) {
-        $stmt = $this->pdo->prepare("INSERT INTO anime_pages (title, description) VALUES (:title, :description)");
-        $stmt->execute(['title' => $title, 'description' => $description]);
+        $trimmedTitle = trim($title);
+        $trimmedDescription = trim($description);
+
+        if (empty($trimmedTitle) || empty($trimmedDescription)) {
+            throw new InvalidArgumentException("Title and description cannot be empty or consist only of whitespace.");
+        }
+        else{
+            $stmt = $this->pdo->prepare("INSERT INTO anime_pages (title, description) VALUES (:title, :description)");
+            $stmt->execute(['title' => $title, 'description' => $description]);
+        }
     }
 
     public function retrieveAll() {
@@ -31,8 +39,16 @@ class AnimePagesCRUD {
     }
 
     public function update($id, $title, $description) {
-        $stmt = $this->pdo->prepare("UPDATE anime_pages SET title = :title, description = :description WHERE anime_page_id = :id");
-        $stmt->execute(['id' => $id, 'title' => $title, 'description' => $description]);
+        $trimmedTitle = trim($title);
+        $trimmedDescription = trim($description);
+
+        if (empty($trimmedTitle) || empty($trimmedDescription)) {
+            throw new InvalidArgumentException("Title and description cannot be empty or consist only of whitespace.");
+        }
+        else{
+            $stmt = $this->pdo->prepare("UPDATE anime_pages SET title = :title, description = :description WHERE anime_page_id = :id");
+            $stmt->execute(['id' => $id, 'title' => $title, 'description' => $description]);
+        }
     }
 
     public function delete($id) {
@@ -78,14 +94,20 @@ class AnimePagesCRUD {
 function main() {
     
     // Конфигурация базы данных
-    $dbConfig = [
+    /*$dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
         'dbname' => 'your_dbname',
         'user' => 'postgres',
         'password' => 'ardin2004'
+    ];*/
+    $dbConfig = [
+        'host' => 'dpg-csu02hl6l47c739df8og-a.oregon-postgres.render.com',
+        'port' => '5432',
+        'dbname' => 'arddb_61ib',
+        'user' => 'arddb_61ib_user',
+        'password' => 'ta81qJ4ZSiUwAU253KuqEk0ZLK3g1HXp'
     ];
-    
 
     // Создаем экземпляр класса
     $crud = new AnimePagesCRUD($dbConfig);
@@ -99,8 +121,12 @@ function main() {
             case '1':
                 $title = readline("Enter title: ");
                 $description = readline("Enter description: ");
-                $crud->create($title, $description);
-                echo "Anime page created.\n";
+                try {
+                    $crud->create($title, $description);
+                    echo "Anime page created.\n";
+                } catch (InvalidArgumentException $e) {
+                    echo "Error: " . $e->getMessage() . "\n";
+                }
                 break;
 
             case '2':
@@ -125,8 +151,13 @@ function main() {
                 if ($crud->retrieve($id)) {
                     $title = readline("Enter new title: ");
                     $description = readline("Enter new description: ");
-                    $crud->update($id, $title, $description);
-                    echo "Anime page updated.\n";
+                    try{
+                        $crud->update($id, $title, $description);
+                        echo "Anime page updated.\n";
+                    }
+                    catch (InvalidArgumentException $e) {
+                        echo "Error: " . $e->getMessage() . "\n";
+                    }
                 } else {
                     echo "Anime page not found.\n";
                 }
