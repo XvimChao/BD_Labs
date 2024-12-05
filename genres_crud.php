@@ -18,22 +18,22 @@ class AnimePagesCRUD {
         $trimmedTitle = trim($title);
         $trimmedDescription = trim($description);
 
-        if (empty($trimmedTitle) || empty($trimmedDescription)) {
-            throw new InvalidArgumentException("Title and description cannot be empty or consist only of whitespace.");
+        if (empty($trimmedTitle) || empty($trimmedDescription) || strlen($trimmedTitle) > 255) {
+            throw new InvalidArgumentException("Title and description cannot be empty or consist only of whitespace and title cannot be longer than 255 letters.");
         }
         else{
-            $stmt = $this->pdo->prepare("INSERT INTO anime_pages (title, description) VALUES (:title, :description)");
+            $stmt = $this->pdo->prepare("INSERT INTO genres (title, description) VALUES (:title, :description)");
             $stmt->execute(['title' => $title, 'description' => $description]);
         }
     }
 
     public function retrieveAll() {
-        $stmt = $this->pdo->query("SELECT * FROM anime_pages ORDER BY anime_page_id");
+        $stmt = $this->pdo->query("SELECT * FROM genres ORDER BY genre_id");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function retrieve($id) {
-        $stmt = $this->pdo->prepare("SELECT * FROM anime_pages WHERE anime_page_id = :id");
+        $stmt = $this->pdo->prepare("SELECT * FROM genres WHERE genre_id = :id");
         $stmt->execute(['id' => $id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
@@ -42,17 +42,17 @@ class AnimePagesCRUD {
         $trimmedTitle = trim($title);
         $trimmedDescription = trim($description);
 
-        if (empty($trimmedTitle) || empty($trimmedDescription)) {
-            throw new InvalidArgumentException("Title and description cannot be empty or consist only of whitespace.");
+        if (empty($trimmedTitle) || empty($trimmedDescription) || strlen($trimmedTitle) > 255) {
+            throw new InvalidArgumentException("Title and description cannot be empty or consist only of whitespace and title cannot be longer than 255 letters.");
         }
         else{
-            $stmt = $this->pdo->prepare("UPDATE anime_pages SET title = :title, description = :description WHERE anime_page_id = :id");
+            $stmt = $this->pdo->prepare("UPDATE genres SET title = :title, description = :description WHERE genre_id = :id");
             $stmt->execute(['id' => $id, 'title' => $title, 'description' => $description]);
         }
     }
 
     public function delete($id) {
-        $stmt = $this->pdo->prepare("DELETE FROM anime_pages WHERE anime_page_id = :id");
+        $stmt = $this->pdo->prepare("DELETE FROM genres WHERE genre_id = :id");
         $stmt->execute(['id' => $id]);
     }
 
@@ -61,59 +61,63 @@ class AnimePagesCRUD {
         
         // Создаем строку с параметрами для запроса
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
-        $stmt = $this->pdo->prepare("DELETE FROM anime_pages WHERE anime_page_id IN ($placeholders)");
+        $stmt = $this->pdo->prepare("DELETE FROM genres WHERE genre_id IN ($placeholders)");
         $stmt->execute($ids);
+        
     }
 
-    public function nameSearch($title, $description, $limit = 5, $offset = 0){
-        $sql = "SELECT * FROM anime_pages";
+    /*public function nameSearch($title, $description, $limit = 5, $offset = 0){
+        $sql = "SELECT * FROM anime_pages WHERE 1=1"; // 1=1 — трюк для упрощения добавления условий
         $queryParams = [];
 
-        foreach($searchParams as $key => $value){
-            if(!empty($value)){
-                $sql .= "AND $key =:$key ";
-                $queryParams[":$key"]=$value;
+        // Динамическое построение SQL на основе предоставленных параметров поиска
+        foreach ($searchParams as $key => $value) {
+            if (!empty($value)) {
+                $sql .= " AND $key ILIKE :$key"; 
+                $queryParams[":$key"] = '%' . $value . '%';
             }
         }
 
         $sql .= "LIMIT :limit OFFSET :offset";
         $stmt = $this->pdo->prepare($sql);
 
-        $stmt->binValue(':limit',(int)$limit,PDO::PARAM_INT);
-        $stmt->binValue(':offset',(int)$offset,PDO::PARAM_INT);
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
 
-        foreach($queryParams as $param => $value){
-            $stmt->binValue($param,$value);
+        foreach ($queryParams as $param => $value) {
+            $stmt->bindValue($param, $value);
         }
+
         $stmt->execute();
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+    }*/
 }
 
 function main() {
     
     // Конфигурация базы данных
-    /*$dbConfig = [
+    $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
         'dbname' => 'your_dbname',
         'user' => 'postgres',
         'password' => 'ardin2004'
-    ];*/
+    ];
+    /*
     $dbConfig = [
         'host' => 'dpg-csu02hl6l47c739df8og-a.oregon-postgres.render.com',
         'port' => '5432',
         'dbname' => 'arddb_61ib',
         'user' => 'arddb_61ib_user',
         'password' => 'ta81qJ4ZSiUwAU253KuqEk0ZLK3g1HXp'
-    ];
+    ];*/
 
     // Создаем экземпляр класса
     $crud = new AnimePagesCRUD($dbConfig);
     
     while (true) {
-        echo "\n1. Create\n2. Retrieve All\n3. Retrieve\n4. Update\n5. Delete\n6. Delete Many\n7. nameSearch\n8. Exit\n";
+        echo "\n1. Create\n2. Retrieve All\n3. Retrieve\n4. Update\n5. Delete\n6. Delete Many\n7. Exit\n";
 
         $choice = readline("Choose an option: ");
         
@@ -123,7 +127,7 @@ function main() {
                 $description = readline("Enter description: ");
                 try {
                     $crud->create($title, $description);
-                    echo "Anime page created.\n";
+                    echo "Genre created.\n";
                 } catch (InvalidArgumentException $e) {
                     echo "Error: " . $e->getMessage() . "\n";
                 }
@@ -132,7 +136,7 @@ function main() {
             case '2':
                 $pages = $crud->retrieveAll();
                 foreach ($pages as $page) {
-                    echo "ID: {$page['anime_page_id']}, Title: {$page['title']}, Description: {$page['description']}\n";
+                    echo "ID: {$page['genre_id']}, Title: {$page['title']}, Description: {$page['description']}\n";
                 }
                 break;
 
@@ -140,7 +144,7 @@ function main() {
                 $id = (int)readline("Enter ID: ");
                 $page = $crud->retrieve($id);
                 if ($page) {
-                    echo "ID: {$page['anime_page_id']}, Title: {$page['title']}, Description: {$page['description']}\n";
+                    echo "ID: {$page['genre_id']}, Title: {$page['title']}, Description: {$page['description']}\n";
                 } else {
                     echo "Anime page not found.\n";
                 }
@@ -153,13 +157,13 @@ function main() {
                     $description = readline("Enter new description: ");
                     try{
                         $crud->update($id, $title, $description);
-                        echo "Anime page updated.\n";
+                        echo "Genre updated.\n";
                     }
                     catch (InvalidArgumentException $e) {
                         echo "Error: " . $e->getMessage() . "\n";
                     }
                 } else {
-                    echo "Anime page not found.\n";
+                    echo "Genre not found.\n";
                 }
                 break;
 
@@ -167,9 +171,9 @@ function main() {
                 $id = (int)readline("Enter ID: ");
                 if ($crud->retrieve($id)) {
                     $crud->delete($id);
-                    echo "Anime page deleted.\n";
+                    echo "Genre deleted.\n";
                 } else {
-                    echo "Anime page not found.\n";
+                    echo "Genre not found.\n";
                 }
                 break;
 
@@ -178,26 +182,58 @@ function main() {
                 if (!empty(trim($idsInput))) {
                     // Преобразуем строку в массив целых чисел
                     $ids = array_map('intval', explode(',', trim($idsInput)));
-                    if (!empty($ids)) {
-                        $crud->deleteMany($ids);
-                        echo "Anime pages deleted.\n";
+
+                    $existingIds = [];
+                    $nonExistingIds = [];
+
+                    foreach ($ids as $id) {
+                        // Проверяем, существует ли запись с текущим ID
+                        if ($crud->retrieve($id)){
+                            $existingIds[] = $id;
+                        } else {
+                            $nonExistingIds[] = $id;
+                        }
+                    }
+
+                    if (empty($existingIds)) {
+                        echo "No genres with the given IDs.\n";
+                    } else {
+                        // Выводим отсутствующие ID, если они есть
+                        if (!empty($nonExistingIds)) {
+                            echo "The following IDs were not found: " . implode(', ', $nonExistingIds) . "\n";
+                        }
+                        $crud->deleteMany($existingIds);
+                        echo "Genres with IDs " . implode(', ', $existingIds) . " have been deleted.\n";
                     }
                 } else {
                     echo "No IDs provided.\n";
                 }
                 break;
 
-            case '7':
+            /*case '7':
                 $title = readline("Enter title: ");
                 $description = readline("Enter description: ");
                 $searchParams = [
-                    'title' => 'N',
-                    'description' => 'N'
+                    'title' => trim($title),
+                    'description' => trim($description)
                 ];
-                $results=$crud->nameSearch($searchParams,5,0);
-                print_r($results);
-
-            case '8':
+                $limit = (int)readline("Enter number of results per page (default 5): ");
+                if ($limit <= 0) {
+                    $limit = 5; // Default value
+                }
+                $offset = (int)readline("Enter offset (default 0): ");
+                try {
+                    $results = $crud->nameSearch($searchParams, $limit, $offset);
+                    if (!empty($results)) {
+                        print_r($results);
+                    } else {
+                        echo "No results found.\n";
+                    }
+                } catch (Exception $e) {
+                    echo "Error: " . $e->getMessage() . "\n";
+                }
+            */
+            case '7':
                 exit("Exiting...\n");
 
             default:
