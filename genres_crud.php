@@ -39,15 +39,19 @@ class AnimePagesCRUD {
     }
 
     public function update($id, $title, $description) {
+        $currentData = $this->retrieve($id);
         $trimmedTitle = trim($title);
         $trimmedDescription = trim($description);
 
-        if (empty($trimmedTitle) || empty($trimmedDescription) || strlen($trimmedTitle) > 255) {
+        $newTitle = !empty($trimmedTitle) ? $trimmedTitle : $currentData['title'];
+        $newDescription = !empty($trimmedDescription) ? $trimmedDescription : $currentData['description'];
+
+        if (empty($newTitle) || empty($newDescription) || strlen($newTitle) > 255) {
             throw new InvalidArgumentException("Title and description cannot be empty or consist only of whitespace and title cannot be longer than 255 letters.");
         }
         else{
             $stmt = $this->pdo->prepare("UPDATE genres SET title = :title, description = :description WHERE genre_id = :id");
-            $stmt->execute(['id' => $id, 'title' => $title, 'description' => $description]);
+            $stmt->execute(['id' => $id, 'title' => $newTitle, 'description' => $newDescription]);
         }
     }
 
@@ -97,21 +101,21 @@ class AnimePagesCRUD {
 function main() {
     
     // Конфигурация базы данных
-    $dbConfig = [
+    /*$dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
         'dbname' => 'your_dbname',
         'user' => 'postgres',
         'password' => 'ardin2004'
-    ];
-    /*
+    ];*/
+    
     $dbConfig = [
         'host' => 'dpg-csu02hl6l47c739df8og-a.oregon-postgres.render.com',
         'port' => '5432',
         'dbname' => 'arddb_61ib',
         'user' => 'arddb_61ib_user',
         'password' => 'ta81qJ4ZSiUwAU253KuqEk0ZLK3g1HXp'
-    ];*/
+    ];
 
     // Создаем экземпляр класса
     $crud = new AnimePagesCRUD($dbConfig);
@@ -136,7 +140,7 @@ function main() {
             case '2':
                 $pages = $crud->retrieveAll();
                 foreach ($pages as $page) {
-                    echo "ID: {$page['genre_id']}, Title: {$page['title']}, Description: {$page['description']}\n";
+                    echo "ID: {$page['genre_id']},     Title: {$page['title']},     Description: {$page['description']}\n";
                 }
                 break;
 
@@ -144,9 +148,9 @@ function main() {
                 $id = (int)readline("Enter ID: ");
                 $page = $crud->retrieve($id);
                 if ($page) {
-                    echo "ID: {$page['genre_id']}, Title: {$page['title']}, Description: {$page['description']}\n";
+                    echo "ID: {$page['genre_id']},     Title: {$page['title']},      Description: {$page['description']}\n";
                 } else {
-                    echo "Anime page not found.\n";
+                    echo "Genre not found.\n";
                 }
                 break;
 
