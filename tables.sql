@@ -83,22 +83,22 @@ CREATE TABLE genres (
 );
 
 INSERT INTO genres (genre_id, title, description) VALUES
-	(1,'Комедия', 'Описание'),
-	(2,'Романтика', 'Описание'),
-	(3,'Детектив', 'Описание'),
-	(4,'Драма', 'Описание'),
-	(5,'Повседневность', 'Описание'),
-	(6,'Боевик', 'Описание'),
-	(7,'Сёнен', 'Описание'),
-	(8,'Сёдзё', 'Описание'),
-	(9,'Сэйнэн', 'Описание'),
-	(10,'Меха', 'Описание');
+	(1,'Комедия', 'Описание1'),
+	(2,'Романтика', 'Описание2'),
+	(3,'Детектив', 'Описание3'),
+	(4,'Драма', 'Описание4'),
+	(5,'Повседневность', 'Описание5'),
+	(6,'Боевик', 'Описание6'),
+	(7,'Сёнен', 'Описание7'),
+	(8,'Сёдзё', 'Описание8'),
+	(9,'Сэйнэн', 'Описание9'),
+	(10,'Меха', 'Описание10');
 
 SELECT setval('genre_id_seq', COALESCE((SELECT MAX(genre_id)  FROM genres), 0));
 
 CREATE TABLE anime_genres (
 	anime_id INT NOT NULL,
-	genre_id INT NOT NULL,
+	genre_id INT,
 	PRIMARY KEY (anime_id, genre_id),
 	FOREIGN KEY (anime_id) REFERENCES anime(anime_id) ON DELETE CASCADE,
 	FOREIGN KEY (genre_id) REFERENCES genres(genre_id) ON DELETE SET NULL
