@@ -101,7 +101,7 @@ CREATE TABLE anime_genres (
 	genre_id INT,
 	PRIMARY KEY (anime_id, genre_id),
 	FOREIGN KEY (anime_id) REFERENCES anime(anime_id) ON DELETE CASCADE,
-	FOREIGN KEY (genre_id) REFERENCES genres(genre_id) ON DELETE SET NULL
+	FOREIGN KEY (genre_id) REFERENCES genres(genre_id) ON DELETE CASCADE
 );
 
 INSERT INTO anime_genres (anime_id, genre_id) VALUES

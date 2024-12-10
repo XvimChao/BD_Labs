@@ -72,22 +72,11 @@ class AnimePagesCRUD {
 
     public function deleteMany($ids) {
         if (empty($ids)) return;
-
-        // Фильтруем массив для удаления всех NULL значений
-        $ids = array_filter($ids);
-    
-        // Если массив пустой после фильтрации, выходим
-        if (empty($ids)) return;
         
         // Создаем строку с параметрами для запроса
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
         $stmt = $this->pdo->prepare("DELETE FROM genres WHERE genre_id IN ($placeholders)");
-
-        try {
-            $stmt->execute($ids);
-        } catch (PDOException $e) {
-            echo "Ошибка при удалении жанров: " . $e->getMessage();
-        }
+        $stmt->execute($ids);
         
     }
 
@@ -158,15 +147,25 @@ function main() {
                 }
                 break;
 
-                case '2':
-                    $pages = $crud->retrieveAll();
-                    // Заголовки столбцов
-                    printf("%-5s %-25s %-30s\n", "ID", "Title", "Description");
-                    echo str_repeat("-", 60) . "\n"; // Разделительная линия
-                    foreach ($pages as $page) {
-                        printf("%-5d %-35s %-30s\n", $page['genre_id'], $page['title'], $page['description']);
-                    }
-                    break;
+            case '2':
+                $pages = $crud->retrieveAll();
+                // Заголовки столбцов
+                printf("%-5s %-25s %-30s\n", "ID", "Title", "Description");
+                echo str_repeat("-", 60) . "\n"; // Разделительная линия
+                foreach ($pages as $page) {
+                    printf("%-5d %-35s %-30s\n", $page['genre_id'], $page['title'], $page['description']);
+                }
+                break;
+            case '3':
+                $id = (int)readline("Enter ID: ");
+                $page = $crud->retrieve($id);
+                if ($page) {
+                    echo "ID: {$page['genre_id']},     Title: {$page['title']},      Description: {$page['description']}\n";
+                } else {
+                    echo "Genre not found.\n";
+                }
+                break;
+
             case '4':
                 $id = (int)readline("Enter ID: ");
                 if ($crud->retrieve($id)) {
