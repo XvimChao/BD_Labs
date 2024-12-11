@@ -1,6 +1,6 @@
 <?php
 
-class AnimePagesCRUD {
+class GenresCRUD {
     
     
     private $pdo;
@@ -80,32 +80,38 @@ class AnimePagesCRUD {
         
     }
 
-    /*public function nameSearch($title, $description, $limit = 5, $offset = 0){
-        $sql = "SELECT * FROM anime_pages WHERE 1=1"; // 1=1 — трюк для упрощения добавления условий
+    public function nameSearch($title, $description, $limit = 5, $offset = 0) {
+        $sql = "SELECT * FROM genres WHERE 1=1"; // Измените на вашу таблицу
         $queryParams = [];
-
-        // Динамическое построение SQL на основе предоставленных параметров поиска
-        foreach ($searchParams as $key => $value) {
-            if (!empty($value)) {
-                $sql .= " AND $key ILIKE :$key"; 
-                $queryParams[":$key"] = '%' . $value . '%';
-            }
+    
+        // Проверяем наличие параметра title
+        if (!empty($title)) {
+            $sql .= " AND title ILIKE :title";
+            $queryParams[":title"] = '%' . trim($title) . '%'; // Используем ILIKE для регистронезависимого поиска
         }
-
-        $sql .= "LIMIT :limit OFFSET :offset";
+    
+        // Проверяем наличие параметра description
+        if (!empty($description)) {
+            $sql .= " AND description ILIKE :description";
+            $queryParams[":description"] = '%' . trim($description) . '%'; // Используем ILIKE для регистронезависимого поиска
+        }
+    
+        // Добавляем параметры пагинации
+        $sql .= " LIMIT :limit OFFSET :offset";
         $stmt = $this->pdo->prepare($sql);
-
         $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
         $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
-
+    
+        // Привязываем параметры поиска
         foreach ($queryParams as $param => $value) {
             $stmt->bindValue($param, $value);
         }
-
+    
+        // Выполняем запрос
         $stmt->execute();
-
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }*/
+    }
+    
 }
 
 function main() {
@@ -128,10 +134,10 @@ function main() {
     ];
 
     // Создаем экземпляр класса
-    $crud = new AnimePagesCRUD($dbConfig);
+    $crud = new GenresCRUD($dbConfig);
     
     while (true) {
-        echo "\n1. Create\n2. Retrieve All\n3. Retrieve\n4. Update\n5. Delete\n6. Delete Many\n7. Exit\n";
+        echo "\n1. Create\n2. Retrieve All\n3. Retrieve\n4. Update\n5. Delete\n6. Delete Many\n7. NameSearch\n8. Exit\n";
 
         $choice = readline("Choose an option: ");
         
@@ -226,30 +232,34 @@ function main() {
                 }
                 break;
 
-            /*case '7':
-                $title = readline("Enter title: ");
-                $description = readline("Enter description: ");
-                $searchParams = [
-                    'title' => trim($title),
-                    'description' => trim($description)
-                ];
-                $limit = (int)readline("Enter number of results per page (default 5): ");
-                if ($limit <= 0) {
-                    $limit = 5; // Default value
-                }
-                $offset = (int)readline("Enter offset (default 0): ");
-                try {
-                    $results = $crud->nameSearch($searchParams, $limit, $offset);
-                    if (!empty($results)) {
-                        print_r($results);
-                    } else {
-                        echo "No results found.\n";
+                case '7': // Поиск
+                    $title = readline("Enter title to search (leave empty for no filter): ");
+                    $description = readline("Enter description to search (leave empty for no filter): ");
+                    
+                    // Параметры пагинации
+                    $limit = (int)readline("Enter number of results per page (default 5): ");
+
+                    if ($limit <= 0) { 
+                        $limit = 5; 
                     }
-                } catch (Exception $e) {
-                    echo "Error: " . $e->getMessage() . "\n";
-                }
-            */
-            case '7':
+                    
+                    $offset = (int)readline("Enter offset (default 0): ");
+                    
+                    try {
+                        // Вызов метода nameSearch с двумя параметрами
+                        $results = $crud->nameSearch($title, $description, $limit, $offset);
+                        if (!empty($results)) {
+                            foreach ($results as $result) {
+                                echo "ID: {$result['genre_id']}, Title: {$result['title']}, Description: {$result['description']}\n";
+                            }
+                        } else {
+                            echo "No results found.\n";
+                        }
+                    } catch (Exception $e) {
+                        echo "Error: " . $e->getMessage() . "\n";
+                    }
+                    break;
+            case '8':
                 exit("Exiting...\n");
 
             default:
