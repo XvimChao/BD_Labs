@@ -1,12 +1,15 @@
+DROP SEQUENCE IF EXISTS anime_page_id_seq CASCADE;
 
 CREATE SEQUENCE anime_page_id_seq;
+
+DROP TABLE IF EXISTS anime_pages CASCADE;
 
 CREATE TABLE anime_pages (
     anime_page_id INT DEFAULT nextval('anime_page_id_seq') PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
-	CHECK (TRIM(title) <> ''),
-	CHECK (TRIM(description) <> '')
+    CHECK (TRIM(title) <> ''),
+    CHECK (TRIM(description) <> '')
 );
 
 INSERT INTO anime_pages (anime_page_id, title, description) VALUES
@@ -31,7 +34,9 @@ INSERT INTO anime_pages (anime_page_id, title, description) VALUES
     (19,'Ichigo Kurosaki', 'Description19'),
     (20,'Happy', 'Description20');
 
-SELECT setval('anime_page_id_seq', COALESCE((SELECT MAX(anime_page_id)  FROM anime_pages), 0));
+SELECT setval('anime_page_id_seq', COALESCE((SELECT MAX(anime_page_id) FROM anime_pages), 0));
+
+DROP TABLE IF EXISTS anime CASCADE;
 
 CREATE TABLE anime (
     anime_id INT PRIMARY KEY NOT NULL,
@@ -52,6 +57,9 @@ INSERT INTO anime (anime_id, release_date, episode_count) VALUES
     (15,'2004-04-06', 74), -- Monster
     (16,'2009-10-12', 328); -- Fairy Tail
 
+DROP TABLE IF EXISTS characters CASCADE;
+
+-- Create the characters table
 CREATE TABLE characters (
     character_id INT PRIMARY KEY NOT NULL,
     age INT CHECK(age > 0),
@@ -72,11 +80,15 @@ INSERT INTO characters (character_id, age, biography) VALUES
     (19,27, 'Биография'), -- Ichigo Kurosaki
     (20,6, 'Биография'); -- Happy
 
+DROP SEQUENCE IF EXISTS genre_id_seq CASCADE;
+
 CREATE SEQUENCE genre_id_seq;
+
+DROP TABLE IF EXISTS genres CASCADE;
 
 CREATE TABLE genres (
 	genre_id INT DEFAULT nextval('genre_id_seq') PRIMARY KEY,
-	title VARCHAR(255) NOT NULL, 
+	title VARCHAR(255) NOT NULL,
 	description TEXT NOT NULL,
 	CHECK (TRIM(title) <> ''),
 	CHECK (TRIM(description) <> '')
@@ -94,7 +106,9 @@ INSERT INTO genres (genre_id, title, description) VALUES
 	(9,'Сэйнэн', 'Описание9'),
 	(10,'Меха', 'Описание10');
 
-SELECT setval('genre_id_seq', COALESCE((SELECT MAX(genre_id)  FROM genres), 0));
+SELECT setval('genre_id_seq', COALESCE((SELECT MAX(genre_id) FROM genres), 0));
+
+DROP TABLE IF EXISTS anime_genres CASCADE;
 
 CREATE TABLE anime_genres (
 	anime_id INT NOT NULL,
@@ -116,6 +130,8 @@ INSERT INTO anime_genres (anime_id, genre_id) VALUES
 (4, 6),
 (4, 7);
 
+DROP TABLE IF EXISTS anime_characters CASCADE;
+
 CREATE TABLE anime_characters (
 	anime_id INT NOT NULL,
 	character_id INT NOT NULL,
@@ -125,7 +141,7 @@ CREATE TABLE anime_characters (
 );
 
 INSERT INTO anime_characters (anime_id, character_id) VALUES
-(1, 2), -- Naruto -> Naruto Uzumaki
+(1, 2), -- Naruto -> Naruto Uzumaki 
 (3, 18),
 (3, 19),
 (4, 5),
@@ -136,55 +152,64 @@ INSERT INTO anime_characters (anime_id, character_id) VALUES
 (11, 17),
 (16, 20);
 
+DROP SEQUENCE IF EXISTS user_id_seq CASCADE;
+
 CREATE SEQUENCE user_id_seq;
 
+DROP TABLE IF EXISTS users CASCADE;
+
+ 
 CREATE TABLE users (
 	user_id INT DEFAULT nextval('user_id_seq') PRIMARY KEY,
 	username VARCHAR(32) NOT NULL,
-	email VARCHAR(64) UNIQUE NOT NULL, -- Указать в таблице
+	email VARCHAR(64) UNIQUE NOT NULL,
 	password VARCHAR(64) NOT NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	CHECK (TRIM(username) <> ''),
-	CHECK (TRIM(email) <> '')
+	CHECK(TRIM(username) <> ''),
+	CHECK(TRIM(email) <> '')
 );
 
-INSERT INTO users (user_id, username, email, password, created_at) VALUES
-	(1,'user1', 'primer1@gmail.com', 'password1', '2024-01-10 00:00:00'),
-	(2,'user2', 'primer2@gmail.com', 'password2', '2000-02-10'),
-	(3,'user3', 'primer3@gmail.com', 'password3', '2015-03-10'),
-	(4,'user4', 'primer4@gmail.com', 'password4', '2024-04-10'),
-	(5,'user5', 'primer5@gmail.com', 'password5', '2024-05-10'),
-	(6,'user6', 'primer6@gmail.com', 'password6', '2020-06-10'),
-	(7,'user7', 'primer7@gmail.com', 'password7', '2024-07-02'),
-	(8,'user8', 'primer8@gmail.com', 'password8', '2020-08-10'),
-	(9,'user9', 'primer9@gmail.com', 'password9', '2023-01-09'),
-	(10,'user10', 'primer10@gmail.com','password10','2024-01-10');
+ 
+INSERT INTO users(user_id ,username,email,password ,created_at ) VALUES
+	(1 ,'user1' ,'primer1@gmail.com' ,'password1' ,'2024-01-10 00:00:00') ,
+	(2 ,'user2' ,'primer2@gmail.com' ,'password2' ,'2000-02-10') ,
+	(3 ,'user3' ,'primer3@gmail.com' ,'password3' ,'2015-03-10') ,
+	(4 ,'user4' ,'primer4@gmail.com' ,'password4' ,'2024-04-10') ,
+	(5 ,'user5' ,'primer5@gmail.com' ,'password5' ,'2024-05-10') ,
+	(6 ,'user6' ,'primer6@gmail.com' ,'password6' ,'2020-06-10') ,
+	(7 ,'user7' ,'primer7@gmail.com' ,'password7' ,'2024-07-02') ,
+	(8 ,'user8' ,'primer8@gmail.com' ,'password8' ,'2020-08-10') ,
+	(9 ,'user9' ,'primer9@gmail.com' ,'password9' ,'2023-01-09') ,
+	(10 ,'user10','primer10@gmail.com','password10','2024-01-10');
 
-SELECT setval('user_id_seq', COALESCE((SELECT MAX(user_id)  FROM users), 0));
 
-CREATE SEQUENCE review_id_seq;
+SELECT setval('user_id_seq', COALESCE((SELECT MAX(user_id) FROM users), 0));
 
+ 
+DROP TABLE IF EXISTS reviews CASCADE;
+ 
 CREATE TABLE reviews (
 	review_id INT DEFAULT nextval('review_id_seq') PRIMARY KEY,
 	anime_page_id INT NOT NULL,
 	user_id INT NOT NULL,
 	comment TEXT NOT NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	FOREIGN KEY (anime_page_id) REFERENCES anime_pages(anime_page_id) ON DELETE CASCADE,
-	FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-	CHECK (TRIM(comment) <> '')
+	FOREIGN KEY(anime_page_id) REFERENCES anime_pages(anime_page_id) ON DELETE CASCADE,
+	FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+	CHECK(TRIM(comment) <> '')
 );
 
-INSERT INTO reviews(review_id, anime_page_id, user_id, comment, created_at) VALUES
-	(1, 1, 1, 'comment1', '2024-01-01'),
-	(2, 2, 1, 'comment2', '2024-02-01'),
-	(3, 5, 2, 'comment3', '2024-03-01'),
-	(4, 5, 2, 'comment4', '2024-04-01'),
-	(5, 5, 2, 'comment5', '2024-05-01'),
-	(6, 6, 5, 'comment6', '2024-06-01'),
-	(7, 7, 6, 'comment7','2024-07-01'),
-	(8, 8, 9, 'comment8','2024-08-01'),
-	(9, 8, 10,'comment9','2024-09-01'),
-	(10, 10, 10,'comment10','2024-10-01');
-
-SELECT setval('review_id_seq', COALESCE((SELECT MAX(review_id)  FROM reviews), 0));
+ 
+INSERT INTO reviews(review_id ,anime_page_id ,user_id ,comment ,created_at ) VALUES
+	(1 ,1 ,1 ,'comment1','2024-01-01') ,
+	(2 ,2 ,1 ,'comment2','2024-02-01') ,
+	(3 ,5 ,2 ,'comment3','2024-03-01') ,
+	(4 ,5 ,2 ,'comment4','2024-04-01') ,
+	(5 ,5 ,2 ,'comment5','2024-05-01') ,
+	(6 ,6 ,5 ,'comment6','2024-06-01') ,
+	(7 ,7 ,6 ,'comment7','2024-07-01') ,
+	(8 ,8 ,9 ,'comment8','2024-08-01') ,
+	(9 ,8 ,10,'comment9','2024-09-01') ,
+	(10 ,10 ,10,'comment10','2024-10-01');
+ 
+SELECT setval('review_id_seq', COALESCE((SELECT MAX(review_id) FROM reviews), 0));

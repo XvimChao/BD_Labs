@@ -5,10 +5,6 @@ class GenresCRUD {
     // Проверка на вставку символов
     private $pdo;
     
-    function validateInput($input){
-        //Состоит ли строка только из специальных символов
-        $isOnlySpChars = preg_match('/^[^a-zA-Z0-9]*$/u', $input);
-    }
     public function __construct($dbConfig) {
         try {
             $this->pdo = new PDO("pgsql:host={$dbConfig['host']};port={$dbConfig['port']};dbname={$dbConfig['dbname']}", $dbConfig['user'], $dbConfig['password']);
@@ -19,8 +15,11 @@ class GenresCRUD {
     }
 
     public function create($title, $description) {
-        $trimmedTitle = trim($title);
-        $trimmedDescription = trim($description);
+        $trimmedTitle = ucfirst(strtolower(trim($title)));
+        $trimmedDescription = ucfirst(strtolower(trim($description)));
+
+        //$trimmedTitle = ucfirst(strtolower($trimmedTitle));
+        //$trimmedDescription = ucfirst(strtolower($trimmedDescription));
 
         if (empty($trimmedTitle) || empty($trimmedDescription)) {
             throw new InvalidArgumentException("Title and description cannot be empty or consist only of whitespace.");
@@ -29,21 +28,21 @@ class GenresCRUD {
             throw new InvalidArgumentException("Title cannot be longer than 255 letters.");
         }
 
-        if (!preg_match('/[a-zA-Z0-9]/', $trimmedTitle)) {
-            throw new InvalidArgumentException("Title cannot consist only of special characters.");
+        if (!preg_match('/^(?=.*[a-zA-Zа-яА-ЯёЁ])[a-zA-Zа-яА-ЯёЁ\-]+$/u', $trimmedTitle)) {
+            throw new InvalidArgumentException("Title must consist only of letters.");
         }
-
-        if (!preg_match('/[a-zA-Z0-9]/', $trimmedDescription)) {
+        
+        if (!preg_match('/[a-zA-Zа-яА-ЯёЁ]/', $trimmedDescription)) {
             throw new InvalidArgumentException("Description cannot consist only of special characters.");
         }
         
         // Проверка на существование названия или описания
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM genres WHERE title = :title OR description = :description");
-        $stmt->execute(['title' => $trimmedTitle, 'description' => $trimmedDescription]);
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM genres WHERE (title = :title)");
+        $stmt->execute(['title' => $trimmedTitle]);
         $count = $stmt->fetchColumn();
 
         if ($count > 0) {
-            throw new InvalidArgumentException("A genre with the title:'{$trimmedTitle}' or description: '{$trimmedDescription}' already exists.");
+            throw new InvalidArgumentException("A genre with the title:'{$trimmedTitle}' already exist.");
         }
 
         $stmt = $this->pdo->prepare("INSERT INTO genres (title, description) VALUES (:title, :description)");
@@ -65,7 +64,7 @@ class GenresCRUD {
     public function update($id, $title, $description) {
         $currentData = $this->retrieve($id);
         
-        $trimmedTitle = trim($title);
+        $trimmedTitle = ucfirst(strtolower(trim($title)));
         $trimmedDescription = trim($description);
 
         $newTitle = !empty($trimmedTitle) ? $trimmedTitle : $currentData['title'];
@@ -79,21 +78,24 @@ class GenresCRUD {
             throw new InvalidArgumentException("Title cannot be longer than 255 letters.");
         }
         
-        if (!preg_match('/[a-zA-Z0-9]/', $trimmedTitle)) {
-            throw new InvalidArgumentException("Title cannot consist only of special characters.");
+        if (!preg_match('/^(?=.*[a-zA-Zа-яА-ЯёЁ])[a-zA-Zа-яА-ЯёЁ\-]+$/u', $trimmedTitle)) {
+            throw new InvalidArgumentException("Title must consist only of letters.");
         }
-
-        if (!preg_match('/[a-zA-Z0-9]/', $trimmedDescription)) {
+        
+        if (!preg_match('/[a-zA-Zа-яА-ЯёЁ]/', $trimmedDescription)) {
             throw new InvalidArgumentException("Description cannot consist only of special characters.");
         }
         
+        $newTitle = ucfirst(strtolower(trim($newTitle)));
+        $newDescription = trim($newDescription);
+
         // Проверка на существование названия или описания
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM genres WHERE title = :title OR description = :description");
-        $stmt->execute(['title' => $trimmedTitle, 'description' => $trimmedDescription]);
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM genres WHERE (title = :title) AND genre_id != :id");
+        $stmt->execute(['title' => $trimmedTitle,'id' => $id]);
         $count = $stmt->fetchColumn();
 
         if ($count > 0) {
-            throw new InvalidArgumentException("A genre with the title:'{$trimmedTitle}' or description: '{$trimmedDescription}' already exists.");
+            throw new InvalidArgumentException("A genre with the title:'{$trimmedTitle}' already exist.");
         }
         $stmt = $this->pdo->prepare("UPDATE genres SET title = :title, description = :description WHERE genre_id = :id");
         $stmt->execute(['id' => $id, 'title' => $newTitle, 'description' => $newDescription]);
@@ -115,6 +117,7 @@ class GenresCRUD {
         
     }
     
+    /*
     public function nameSearch($title, $description, $limit = 5, $offset = 0) {
         $sql = "SELECT * FROM genres WHERE 1=1"; // Измените на вашу таблицу
         $queryParams = [];
@@ -146,20 +149,21 @@ class GenresCRUD {
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+    */
     
 }
 
 function main() {
     
     // Конфигурация базы данных
-    /*$dbConfig = [
+    $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
         'dbname' => 'your_dbname',
         'user' => 'postgres',
         'password' => 'water7op'
     ];
-    */
+    /*
     $dbConfig = [
         'host' => 'dpg-csu02hl6l47c739df8og-a.oregon-postgres.render.com',
         'port' => '5432',
@@ -167,12 +171,12 @@ function main() {
         'user' => 'arddb_61ib_user',
         'password' => 'ta81qJ4ZSiUwAU253KuqEk0ZLK3g1HXp'
     ];
-
+    */
     // Создаем экземпляр класса
     $crud = new GenresCRUD($dbConfig);
     
     while (true) {
-        echo "\n1. Create\n2. Retrieve All\n3. Retrieve\n4. Update\n5. Delete\n6. Delete Many\n7. Search\n8. Exit\n";
+        echo "\n1. Create\n2. Retrieve All\n3. Retrieve\n4. Update\n5. Delete\n6. Delete Many\n7. Exit\n";
 
         $choice = readline("Choose an option: ");
         
@@ -198,7 +202,12 @@ function main() {
                 }
                 break;
             case '3':
-                $id = (int)readline("Enter ID: ");
+                $id = readline("Enter ID: ");
+
+                if (!filter_var($id, FILTER_VALIDATE_INT)) {
+                    echo "Invalid ID. Please enter a valid integer.\n";
+                    break;
+                }
                 $page = $crud->retrieve($id);
                 if ($page) {
                     printf("%-5s %-15s %-30s\n", "ID", "Title", "Description");
@@ -211,7 +220,13 @@ function main() {
                 break;
 
             case '4':
-                $id = (int)readline("Enter ID: ");
+                $id = readline("Enter ID: ");
+
+                if (!filter_var($id, FILTER_VALIDATE_INT)) {
+                    echo "Invalid ID. Please enter a valid integer.\n";
+                    break;
+                }
+
                 if ($crud->retrieve($id)) {
                     $title = readline("Enter new title: ");
                     $description = readline("Enter new description: ");
@@ -228,7 +243,13 @@ function main() {
                 break;
 
             case '5':
-                $id = (int)readline("Enter ID: ");
+                $id = readline("Enter ID: ");
+
+                if (!filter_var($id, FILTER_VALIDATE_INT)) {
+                    echo "Invalid ID. Please enter a valid integer.\n";
+                    break;
+                }
+
                 if ($crud->retrieve($id)) {
                     $crud->delete($id);
                     echo "Genre deleted.\n";
@@ -241,12 +262,17 @@ function main() {
                 $idsInput = readline("Enter IDs separated by commas: ");
                 if (!empty(trim($idsInput))) {
                     // Преобразуем строку в массив целых чисел
-                    $ids = array_map('intval', explode(',', trim($idsInput)));
+                    $ids = explode(',', trim($idsInput));
 
                     $existingIds = [];
                     $nonExistingIds = [];
 
                     foreach ($ids as $id) {
+
+                        if (!filter_var(trim($id), FILTER_VALIDATE_INT)) {
+                            $nonExistingIds[] = trim($id);
+                            continue;
+                        }
                         // Проверяем, существует ли запись с текущим ID
                         if ($crud->retrieve($id)){
                             $existingIds[] = $id;
@@ -270,7 +296,7 @@ function main() {
                 }
                 break;
                 
-            case '7': // Поиск
+            /*case '7': // Поиск
                 $title = readline("Enter title to search (leave empty for no filter): ");
                 $description = readline("Enter description to search (leave empty for no filter): ");
                     
@@ -297,8 +323,9 @@ function main() {
                     echo "Error: " . $e->getMessage() . "\n";
                 }
                 break;
+                */
 
-            case '8':
+            case '7':
                 exit("Exiting...\n");
 
             default:
