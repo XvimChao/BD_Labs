@@ -67,22 +67,23 @@ class GenresCRUD {
         $trimmedTitle = ucfirst(strtolower(trim($title)));
         $trimmedDescription = trim($description);
 
+        
         $newTitle = !empty($trimmedTitle) ? $trimmedTitle : $currentData['title'];
         $newDescription = !empty($trimmedDescription) ? $trimmedDescription : $currentData['description'];
-
         if (!empty($title) && empty($trimmedTitle) || !empty($description) && empty($trimmedDescription)) {
             throw new InvalidArgumentException("Title and description cannot be consist only of whitespace.");
         }
         
+
         if (strlen($newTitle) > 255) {
             throw new InvalidArgumentException("Title cannot be longer than 255 letters.");
         }
         
-        if (!preg_match('/^(?=.*[a-zA-Zа-яА-ЯёЁ])[a-zA-Zа-яА-ЯёЁ\-]+$/u', $trimmedTitle)) {
+        if (!preg_match('/^(?=.*[a-zA-Zа-яА-ЯёЁ])[a-zA-Zа-яА-ЯёЁ\-]+$/u', $newTitle)) {
             throw new InvalidArgumentException("Title must consist only of letters.");
         }
         
-        if (!preg_match('/[a-zA-Zа-яА-ЯёЁ]/', $trimmedDescription)) {
+        if (!preg_match('/[a-zA-Zа-яА-ЯёЁ]/', $newDescription)) {
             throw new InvalidArgumentException("Description cannot consist only of special characters.");
         }
         
