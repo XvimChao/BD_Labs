@@ -2,9 +2,13 @@
 
 class GenresCRUD {
     
-    
+    // Проверка на вставку символов
     private $pdo;
-
+    
+    function validateInput($input){
+        //Состоит ли строка только из специальных символов
+        $isOnlySpChars = preg_match('/^[^a-zA-Z0-9]*$/u', $input);
+    }
     public function __construct($dbConfig) {
         try {
             $this->pdo = new PDO("pgsql:host={$dbConfig['host']};port={$dbConfig['port']};dbname={$dbConfig['dbname']}", $dbConfig['user'], $dbConfig['password']);
@@ -18,23 +22,33 @@ class GenresCRUD {
         $trimmedTitle = trim($title);
         $trimmedDescription = trim($description);
 
-        if (empty($trimmedTitle) || empty($trimmedDescription) || strlen($trimmedTitle) > 255) {
-            throw new InvalidArgumentException("Title and description cannot be empty or consist only of whitespace and title cannot be longer than 255 letters.");
+        if (empty($trimmedTitle) || empty($trimmedDescription)) {
+            throw new InvalidArgumentException("Title and description cannot be empty or consist only of whitespace.");
         }
-        else{
-             // Проверка на существование названия
-            $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM genres WHERE title = :title OR description = :description");
-            $stmt->execute(['title' => $trimmedTitle, 'description' => $trimmedDescription]);
-            $count = $stmt->fetchColumn();
-
-            if ($count > 0) {
-                throw new InvalidArgumentException("A genre with the title:'{$trimmedTitle}' or description: '{$trimmedDescription}' already exists.");
-            }
-
-            // Вставка нового жанра
-            $stmt = $this->pdo->prepare("INSERT INTO genres (title, description) VALUES (:title, :description)");
-            $stmt->execute(['title' => $trimmedTitle, 'description' => $trimmedDescription]);
+        if (strlen($trimmedTitle) > 255) {
+            throw new InvalidArgumentException("Title cannot be longer than 255 letters.");
         }
+
+        if (!preg_match('/[a-zA-Z0-9]/', $trimmedTitle)) {
+            throw new InvalidArgumentException("Title cannot consist only of special characters.");
+        }
+
+        if (!preg_match('/[a-zA-Z0-9]/', $trimmedDescription)) {
+            throw new InvalidArgumentException("Description cannot consist only of special characters.");
+        }
+        
+        // Проверка на существование названия или описания
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM genres WHERE title = :title OR description = :description");
+        $stmt->execute(['title' => $trimmedTitle, 'description' => $trimmedDescription]);
+        $count = $stmt->fetchColumn();
+
+        if ($count > 0) {
+            throw new InvalidArgumentException("A genre with the title:'{$trimmedTitle}' or description: '{$trimmedDescription}' already exists.");
+        }
+
+        $stmt = $this->pdo->prepare("INSERT INTO genres (title, description) VALUES (:title, :description)");
+        $stmt->execute(['title' => $trimmedTitle, 'description' => $trimmedDescription]);
+        
     }
 
     public function retrieveAll() {
@@ -50,19 +64,40 @@ class GenresCRUD {
 
     public function update($id, $title, $description) {
         $currentData = $this->retrieve($id);
+        
         $trimmedTitle = trim($title);
         $trimmedDescription = trim($description);
 
         $newTitle = !empty($trimmedTitle) ? $trimmedTitle : $currentData['title'];
         $newDescription = !empty($trimmedDescription) ? $trimmedDescription : $currentData['description'];
 
-        if (empty($newTitle) || empty($newDescription) || strlen($newTitle) > 255) {
-            throw new InvalidArgumentException("Title and description cannot be empty or consist only of whitespace and title cannot be longer than 255 letters.");
+        if (!empty($title) && empty($trimmedTitle) || !empty($description) && empty($trimmedDescription)) {
+            throw new InvalidArgumentException("Title and description cannot be consist only of whitespace.");
         }
-        else{
-            $stmt = $this->pdo->prepare("UPDATE genres SET title = :title, description = :description WHERE genre_id = :id");
-            $stmt->execute(['id' => $id, 'title' => $newTitle, 'description' => $newDescription]);
+        
+        if (strlen($newTitle) > 255) {
+            throw new InvalidArgumentException("Title cannot be longer than 255 letters.");
         }
+        
+        if (!preg_match('/[a-zA-Z0-9]/', $trimmedTitle)) {
+            throw new InvalidArgumentException("Title cannot consist only of special characters.");
+        }
+
+        if (!preg_match('/[a-zA-Z0-9]/', $trimmedDescription)) {
+            throw new InvalidArgumentException("Description cannot consist only of special characters.");
+        }
+        
+        // Проверка на существование названия или описания
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM genres WHERE title = :title OR description = :description");
+        $stmt->execute(['title' => $trimmedTitle, 'description' => $trimmedDescription]);
+        $count = $stmt->fetchColumn();
+
+        if ($count > 0) {
+            throw new InvalidArgumentException("A genre with the title:'{$trimmedTitle}' or description: '{$trimmedDescription}' already exists.");
+        }
+        $stmt = $this->pdo->prepare("UPDATE genres SET title = :title, description = :description WHERE genre_id = :id");
+        $stmt->execute(['id' => $id, 'title' => $newTitle, 'description' => $newDescription]);
+        
     }
 
     public function delete($id) {
@@ -79,7 +114,7 @@ class GenresCRUD {
         $stmt->execute($ids);
         
     }
-
+    
     public function nameSearch($title, $description, $limit = 5, $offset = 0) {
         $sql = "SELECT * FROM genres WHERE 1=1"; // Измените на вашу таблицу
         $queryParams = [];
@@ -122,9 +157,9 @@ function main() {
         'port' => '5432',
         'dbname' => 'your_dbname',
         'user' => 'postgres',
-        'password' => 'ardin2004'
-    ];*/
-    
+        'password' => 'water7op'
+    ];
+    */
     $dbConfig = [
         'host' => 'dpg-csu02hl6l47c739df8og-a.oregon-postgres.render.com',
         'port' => '5432',
@@ -137,7 +172,7 @@ function main() {
     $crud = new GenresCRUD($dbConfig);
     
     while (true) {
-        echo "\n1. Create\n2. Retrieve All\n3. Retrieve\n4. Update\n5. Delete\n6. Delete Many\n7. NameSearch\n8. Exit\n";
+        echo "\n1. Create\n2. Retrieve All\n3. Retrieve\n4. Update\n5. Delete\n6. Delete Many\n7. Search\n8. Exit\n";
 
         $choice = readline("Choose an option: ");
         
@@ -155,18 +190,21 @@ function main() {
 
             case '2':
                 $pages = $crud->retrieveAll();
-                // Заголовки столбцов
-                printf("%-5s %-25s %-30s\n", "ID", "Title", "Description");
-                echo str_repeat("-", 60) . "\n"; // Разделительная линия
+                
+                printf("%-5s %-15s \t %-30s\n", "ID", "Title", "Description");
+                echo str_repeat("-", 60) . "\n";
                 foreach ($pages as $page) {
-                    printf("%-5d %-35s %-30s\n", $page['genre_id'], $page['title'], $page['description']);
+                    printf("%-5s  %-15s \t %-30s\n", trim($page['genre_id']), trim($page['title']), trim($page['description']));
                 }
                 break;
             case '3':
                 $id = (int)readline("Enter ID: ");
                 $page = $crud->retrieve($id);
                 if ($page) {
-                    echo "ID: {$page['genre_id']},     Title: {$page['title']},      Description: {$page['description']}\n";
+                    printf("%-5s %-15s %-30s\n", "ID", "Title", "Description");
+                    echo str_repeat("-", 60) . "\n";
+                    printf("%-5s  %-15s \t %-30s\n", trim($page['genre_id']), trim($page['title']), trim($page['description']));
+                    
                 } else {
                     echo "Genre not found.\n";
                 }
@@ -231,34 +269,35 @@ function main() {
                     echo "No IDs provided.\n";
                 }
                 break;
-
-                case '7': // Поиск
-                    $title = readline("Enter title to search (leave empty for no filter): ");
-                    $description = readline("Enter description to search (leave empty for no filter): ");
+                
+            case '7': // Поиск
+                $title = readline("Enter title to search (leave empty for no filter): ");
+                $description = readline("Enter description to search (leave empty for no filter): ");
                     
-                    // Параметры пагинации
-                    $limit = (int)readline("Enter number of results per page (default 5): ");
+                // Параметры пагинации
+                $limit = (int)readline("Enter number of results per page (default 5): ");
 
-                    if ($limit <= 0) { 
-                        $limit = 5; 
-                    }
+                if ($limit <= 0) { 
+                    $limit = 5; 
+                }
                     
                     $offset = (int)readline("Enter offset (default 0): ");
                     
-                    try {
-                        // Вызов метода nameSearch с двумя параметрами
-                        $results = $crud->nameSearch($title, $description, $limit, $offset);
-                        if (!empty($results)) {
-                            foreach ($results as $result) {
-                                echo "ID: {$result['genre_id']}, Title: {$result['title']}, Description: {$result['description']}\n";
-                            }
-                        } else {
-                            echo "No results found.\n";
+                try {
+                    // Вызов метода nameSearch с двумя параметрами
+                    $results = $crud->nameSearch($title, $description, $limit, $offset);
+                    if (!empty($results)) {
+                        foreach ($results as $result) {
+                            echo "ID: {$result['genre_id']}, Title: {$result['title']}, Description: {$result['description']}\n";
                         }
-                    } catch (Exception $e) {
-                        echo "Error: " . $e->getMessage() . "\n";
+                    } else {
+                        echo "No results found.\n";
                     }
-                    break;
+                } catch (Exception $e) {
+                    echo "Error: " . $e->getMessage() . "\n";
+                }
+                break;
+
             case '8':
                 exit("Exiting...\n");
 
