@@ -134,7 +134,7 @@ class GenresCRUD {
         
     }
     
-    /*
+    
     public function nameSearch($title, $description, $limit = 5, $offset = 0) {
         $sql = "SELECT * FROM genres WHERE 1=1"; // Измените на вашу таблицу
         $queryParams = [];
@@ -142,13 +142,13 @@ class GenresCRUD {
         // Проверяем наличие параметра title
         if (!empty($title)) {
             $sql .= " AND title ILIKE :title";
-            $queryParams[":title"] = '%' . trim($title) . '%'; // Используем ILIKE для регистронезависимого поиска
+            $queryParams[":title"] = trim($title) . '%'; // Используем ILIKE для регистронезависимого поиска
         }
     
         // Проверяем наличие параметра description
         if (!empty($description)) {
             $sql .= " AND description ILIKE :description";
-            $queryParams[":description"] = '%' . trim($description) . '%'; // Используем ILIKE для регистронезависимого поиска
+            $queryParams[":description"] = trim($description) . '%'; // Используем ILIKE для регистронезависимого поиска
         }
     
         // Добавляем параметры пагинации
@@ -166,7 +166,7 @@ class GenresCRUD {
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-    */
+    
     
 }
 
@@ -193,7 +193,7 @@ function main() {
     $crud = new GenresCRUD($dbConfig);
     
     while (true) {
-        echo "\n1. Create\n2. Retrieve All\n3. Retrieve\n4. Update\n5. Delete\n6. Delete Many\n7. Exit\n";
+        echo "\n1. Create\n2. Retrieve All\n3. Retrieve\n4. Update\n5. Delete\n6. Delete Many\n7. Search\n8. Exit\n";
 
         $choice = readline("Choose an option: ");
         
@@ -313,7 +313,7 @@ function main() {
                 }
                 break;
                 
-            /*case '7':
+            case '7':
                 $title = readline("Enter title to search (leave empty for no filter): ");
                 $description = readline("Enter description to search (leave empty for no filter): ");
                     
@@ -330,8 +330,10 @@ function main() {
                     // Вызов метода nameSearch с двумя параметрами
                     $results = $crud->nameSearch($title, $description, $limit, $offset);
                     if (!empty($results)) {
-                        foreach ($results as $result) {
-                            echo "ID: {$result['genre_id']}, Title: {$result['title']}, Description: {$result['description']}\n";
+                        printf("%-5s %-15s \t %-30s\n", "ID", "Title", "Description");
+                        echo str_repeat("-", 60) . "\n";
+                        foreach ($results as $page) {
+                            printf("%-5s  %-15s \t %-30s\n", trim($page['genre_id']), trim($page['title']), trim($page['description']));
                         }
                     } else {
                         echo "No results found.\n";
@@ -340,9 +342,9 @@ function main() {
                     echo "Error: " . $e->getMessage() . "\n";
                 }
                 break;
-                */
+                
 
-            case '7':
+            case '8':
                 exit("Exiting...\n");
 
             default:
