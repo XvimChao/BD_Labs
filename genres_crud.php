@@ -1,10 +1,11 @@
 <?php
-
 class GenresCRUD {
     
     // Проверка на вставку символов
     private $pdo;
+
     
+
     public function __construct($dbConfig) {
         try {
             $this->pdo = new PDO("pgsql:host={$dbConfig['host']};port={$dbConfig['port']};dbname={$dbConfig['dbname']}", $dbConfig['user'], $dbConfig['password']);
@@ -14,27 +15,43 @@ class GenresCRUD {
         }
     }
 
+    public function mb_ucfirst($str, $encoding='UTF-8') {
+        $str = mb_strtolower($str, $encoding);
+        // Делаем первую букву заглавной
+        return mb_strtoupper(mb_substr($str, 0, 1, $encoding), $encoding) . mb_substr($str, 1, mb_strlen($str, $encoding), $encoding);
+    }
+
+    public function mf_first($str, $encoding='UTF-8') {
+        // Делаем первую букву заглавной
+        return mb_strtoupper(mb_substr($str, 0, 1, $encoding), $encoding) . mb_substr($str, 1, mb_strlen($str, $encoding), $encoding);
+    }
+    
     public function create($title, $description) {
-        $trimmedTitle = ucfirst(strtolower(trim($title)));
-        $trimmedDescription = ucfirst(strtolower(trim($description)));
-
-        //$trimmedTitle = ucfirst(strtolower($trimmedTitle));
-        //$trimmedDescription = ucfirst(strtolower($trimmedDescription));
-
-        if (empty($trimmedTitle) || empty($trimmedDescription)) {
-            throw new InvalidArgumentException("Title and description cannot be empty or consist only of whitespace.");
-        }
-        if (strlen($trimmedTitle) > 255) {
-            throw new InvalidArgumentException("Title cannot be longer than 255 letters.");
-        }
-
+     
+        //$trimmedTitle = ucfirst(strtolower(trim($title)));
+        //$trimmedDescription = ucfirst(strtolower(trim($description)));
+        
+        $trimmedTitle = $this->mb_ucfirst($title);
+        $trimmedDescription = $this->mf_first(trim($description));
+        
         if (!preg_match('/^(?=.*[a-zA-Zа-яА-ЯёЁ])[a-zA-Zа-яА-ЯёЁ\-]+$/u', $trimmedTitle)) {
             throw new InvalidArgumentException("Title must consist only of letters.");
+        }
+        
+        if (strlen($trimmedTitle) > 255) {
+            throw new InvalidArgumentException("Title cannot be longer than 255 letters.");
         }
         
         if (!preg_match('/[a-zA-Zа-яА-ЯёЁ]/', $trimmedDescription)) {
             throw new InvalidArgumentException("Description cannot consist only of special characters.");
         }
+        
+        
+        
+        /* if (empty($trimmedTitle) || empty($trimmedDescription)) {
+             throw new InvalidArgumentException("Title and description cannot be empty or consist only of whitespace.");
+        }*/
+
         
         // Проверка на существование названия или описания
         $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM genres WHERE (title = :title)");
@@ -64,23 +81,22 @@ class GenresCRUD {
     public function update($id, $title, $description) {
         $currentData = $this->retrieve($id);
         
-        $trimmedTitle = ucfirst(strtolower(trim($title)));
-        $trimmedDescription = trim($description);
-
+        $trimmedTitle = $this->mb_ucfirst($title);
+        $trimmedDescription = $this->mf_first(trim($description));
         
         $newTitle = !empty($trimmedTitle) ? $trimmedTitle : $currentData['title'];
         $newDescription = !empty($trimmedDescription) ? $trimmedDescription : $currentData['description'];
-        if (!empty($title) && empty($trimmedTitle) || !empty($description) && empty($trimmedDescription)) {
-            throw new InvalidArgumentException("Title and description cannot be consist only of whitespace.");
+
+        if (!preg_match('/^(?=.*[a-zA-Zа-яА-ЯёЁ])[a-zA-Zа-яА-ЯёЁ\-]+$/u', $newTitle)) {
+            throw new InvalidArgumentException("Title must consist only of letters.");
         }
-        
 
         if (strlen($newTitle) > 255) {
             throw new InvalidArgumentException("Title cannot be longer than 255 letters.");
         }
-        
-        if (!preg_match('/^(?=.*[a-zA-Zа-яА-ЯёЁ])[a-zA-Zа-яА-ЯёЁ\-]+$/u', $newTitle)) {
-            throw new InvalidArgumentException("Title must consist only of letters.");
+
+        if (!empty($title) && empty($trimmedTitle) || !empty($description) && empty($trimmedDescription)) {
+            throw new InvalidArgumentException("Title and description cannot be consist only of whitespace.");
         }
         
         if (!preg_match('/[a-zA-Zа-яА-ЯёЁ]/', $newDescription)) {
@@ -263,7 +279,7 @@ function main() {
                 $idsInput = readline("Enter IDs separated by commas: ");
                 if (!empty(trim($idsInput))) {
                     // Преобразуем строку в массив целых чисел
-                    $ids = explode(',', trim($idsInput));
+                    $ids = array_unique(array_map('trim', explode(',', trim($idsInput))));
 
                     $existingIds = [];
                     $nonExistingIds = [];
@@ -297,7 +313,7 @@ function main() {
                 }
                 break;
                 
-            /*case '7': // Поиск
+            /*case '7':
                 $title = readline("Enter title to search (leave empty for no filter): ");
                 $description = readline("Enter description to search (leave empty for no filter): ");
                     
