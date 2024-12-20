@@ -21,18 +21,13 @@ class GenresCRUD {
         return mb_strtoupper(mb_substr($str, 0, 1, $encoding), $encoding) . mb_substr($str, 1, mb_strlen($str, $encoding), $encoding);
     }
 
-    public function mf_first($str, $encoding='UTF-8') {
-        // Делаем первую букву заглавной
-        return mb_strtoupper(mb_substr($str, 0, 1, $encoding), $encoding) . mb_substr($str, 1, mb_strlen($str, $encoding), $encoding);
-    }
-    
     public function create($title, $description) {
      
         //$trimmedTitle = ucfirst(strtolower(trim($title)));
         //$trimmedDescription = ucfirst(strtolower(trim($description)));
         
-        $trimmedTitle = $this->mb_ucfirst($title);
-        $trimmedDescription = $this->mf_first(trim($description));
+        $trimmedTitle = $this->mb_ucfirst(trim($title));
+        $trimmedDescription = $this->mb_ucfirst(trim($description));
         
         if (!preg_match('/^(?=.*[a-zA-Zа-яА-ЯёЁ])[a-zA-Zа-яА-ЯёЁ\-]+$/u', $trimmedTitle)) {
             throw new InvalidArgumentException("Title must consist only of letters.");
@@ -81,8 +76,8 @@ class GenresCRUD {
     public function update($id, $title, $description) {
         $currentData = $this->retrieve($id);
         
-        $trimmedTitle = $this->mb_ucfirst($title);
-        $trimmedDescription = $this->mf_first(trim($description));
+        $trimmedTitle = $this->mb_ucfirst(trim($title));
+        $trimmedDescription = $this->mb_ucfirst(trim($description));
         
         $newTitle = !empty($trimmedTitle) ? $trimmedTitle : $currentData['title'];
         $newDescription = !empty($trimmedDescription) ? $trimmedDescription : $currentData['description'];
@@ -103,8 +98,8 @@ class GenresCRUD {
             throw new InvalidArgumentException("Description cannot consist only of special characters.");
         }
         
-        $newTitle = ucfirst(strtolower(trim($newTitle)));
-        $newDescription = trim($newDescription);
+        $newTitle = $this->mb_ucfirst(trim($newTitle));
+        $newDescription = $this->mb_ucfirst(trim($newDescription));
 
         // Проверка на существование названия или описания
         $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM genres WHERE (title = :title) AND genre_id != :id");
@@ -136,9 +131,12 @@ class GenresCRUD {
     
     
     public function nameSearch($title, $description, $limit = 5, $offset = 0) {
-        $sql = "SELECT * FROM genres WHERE 1=1"; // Измените на вашу таблицу
+        $sql = "SELECT * FROM genres WHERE 1=1";
         $queryParams = [];
-    
+        
+        if(empty($title) && empty($description)){
+            throw new InvalidArgumentException("No results found.");
+        }
         // Проверяем наличие параметра title
         if (!empty($title)) {
             $sql .= " AND title ILIKE :title";
@@ -318,13 +316,17 @@ function main() {
                 $description = readline("Enter description to search (leave empty for no filter): ");
                     
                 // Параметры пагинации
-                $limit = (int)readline("Enter number of results per page (default 5): ");
+                $limit = readline("Enter number of results per page (default 5): ");
 
-                if ($limit <= 0) { 
+                if ($limit <= 0 || !filter_var($limit, FILTER_VALIDATE_INT)) { 
                     $limit = 5; 
                 }
                     
-                    $offset = (int)readline("Enter offset (default 0): ");
+                $offset = readline("Enter offset (default 0): ");
+
+                if($offset < 0 || !filter_var($offset, FILTER_VALIDATE_INT)){
+                    $offset = 0;
+                }
                     
                 try {
                     // Вызов метода nameSearch с двумя параметрами
