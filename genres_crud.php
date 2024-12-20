@@ -29,7 +29,7 @@ class GenresCRUD {
         $trimmedTitle = $this->mb_ucfirst(trim($title));
         $trimmedDescription = $this->mb_ucfirst(trim($description));
         
-        if (!preg_match('/^(?=.*[a-zA-Zа-яА-ЯёЁ])[a-zA-Zа-яА-ЯёЁ\-]+$/u', $trimmedTitle)) {
+        if (!preg_match('/^(?=.*[a-zA-Zа-яА-ЯёЁ])[a-zA-Zа-яА-ЯёЁ\-]+( [a-zA-Zа-яА-ЯёЁ\-]+)?$/u', $trimmedTitle)) {
             throw new InvalidArgumentException("Title must consist only of letters.");
         }
         
@@ -125,28 +125,31 @@ class GenresCRUD {
         // Создаем строку с параметрами для запроса
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
         $stmt = $this->pdo->prepare("DELETE FROM genres WHERE genre_id IN ($placeholders)");
-        $stmt->execute($ids);
-        
+        $stmt->execute($ids);  
     }
-    
     
     public function nameSearch($title, $description, $limit = 5, $offset = 0) {
         $sql = "SELECT * FROM genres WHERE 1=1";
         $queryParams = [];
-        
+
+        $title = trim($title);
+        $description = trim($description);
+
         if(empty($title) && empty($description)){
             throw new InvalidArgumentException("No results found.");
         }
         // Проверяем наличие параметра title
         if (!empty($title)) {
+            $title = preg_replace('/\s+/', ' ', trim($title)); // Заменяем все пробелы на один
             $sql .= " AND title ILIKE :title";
-            $queryParams[":title"] = trim($title) . '%'; // Используем ILIKE для регистронезависимого поиска
+            $queryParams[":title"] = '%'. trim($title) . '%';
         }
     
         // Проверяем наличие параметра description
         if (!empty($description)) {
+            $description = preg_replace('/\s+/', ' ', trim($description)); // Заменяем все пробелы на один
             $sql .= " AND description ILIKE :description";
-            $queryParams[":description"] = trim($description) . '%'; // Используем ILIKE для регистронезависимого поиска
+            $queryParams[":description"] = '%'. trim($description) . '%';
         }
     
         // Добавляем параметры пагинации
@@ -210,10 +213,10 @@ function main() {
             case '2':
                 $pages = $crud->retrieveAll();
                 
-                printf("%-5s %-15s \t %-30s\n", "ID", "Title", "Description");
+                printf("%-5s %-20s \t %-30s\n", "ID", "Title", "Description");
                 echo str_repeat("-", 60) . "\n";
                 foreach ($pages as $page) {
-                    printf("%-5s  %-15s \t %-30s\n", trim($page['genre_id']), trim($page['title']), trim($page['description']));
+                    printf("%-5s %-20s \t\t %-30s\n", trim($page['genre_id']), trim($page['title']), trim($page['description']));
                 }
                 break;
             case '3':
