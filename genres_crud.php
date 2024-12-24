@@ -22,14 +22,20 @@ class GenresCRUD {
     }
 
     public function create($title, $description) {
-     
-        //$trimmedTitle = ucfirst(strtolower(trim($title)));
-        //$trimmedDescription = ucfirst(strtolower(trim($description)));
-        
+
         $trimmedTitle = $this->mb_ucfirst(trim($title));
         $trimmedDescription = $this->mb_ucfirst(trim($description));
+
+        $trimmedTitle = preg_replace('/\s+/', ' ', $trimmedTitle);
         
-        if (!preg_match('/^(?=.*[a-zA-Zа-яА-ЯёЁ])[a-zA-Zа-яА-ЯёЁ\-]+( [a-zA-Zа-яА-ЯёЁ\-]+)?$/u', $trimmedTitle)) {
+        //Удаляю пробелы до и после -
+        $trimmedTitle = preg_replace('/\s*-\s*/', '-', $trimmedTitle);
+        
+        if (!preg_match('/^(?=.*[a-zA-Zа-яА-ЯёЁ])[a-zA-Zа-яА-ЯёЁ]+(-[a-zA-Zа-яА-ЯёЁ]+)?( [a-zA-Zа-яА-ЯёЁ]+(-[a-zA-Zа-яА-ЯёЁ]+)?)?$/u', $trimmedTitle)) {
+            throw new InvalidArgumentException("Title must consist only of letters.");
+        }
+
+        if (preg_match('/[-]/', $trimmedTitle) && preg_match('/[ ]/', $trimmedTitle)) {
             throw new InvalidArgumentException("Title must consist only of letters.");
         }
         
@@ -78,11 +84,16 @@ class GenresCRUD {
         
         $trimmedTitle = $this->mb_ucfirst(trim($title));
         $trimmedDescription = $this->mb_ucfirst(trim($description));
+
+        $trimmedTitle = preg_replace('/\s+/', ' ', $trimmedTitle);
         
+        //Удаляю пробелы до и после -
+        $trimmedTitle = preg_replace('/\s*-\s*/', '-', $trimmedTitle);
+
         $newTitle = !empty($trimmedTitle) ? $trimmedTitle : $currentData['title'];
         $newDescription = !empty($trimmedDescription) ? $trimmedDescription : $currentData['description'];
 
-        if (!preg_match('/^(?=.*[a-zA-Zа-яА-ЯёЁ])[a-zA-Zа-яА-ЯёЁ\-]+$/u', $newTitle)) {
+        if (!preg_match('/^(?=.*[a-zA-Zа-яА-ЯёЁ])[a-zA-Zа-яА-ЯёЁ]+(-[a-zA-Zа-яА-ЯёЁ]+)?( [a-zA-Zа-яА-ЯёЁ]+(-[a-zA-Zа-яА-ЯёЁ]+)?)?$/u', $newTitle)) {
             throw new InvalidArgumentException("Title must consist only of letters.");
         }
 
@@ -90,7 +101,7 @@ class GenresCRUD {
             throw new InvalidArgumentException("Title cannot be longer than 255 letters.");
         }
 
-        if (!empty($title) && empty($trimmedTitle) || !empty($description) && empty($trimmedDescription)) {
+        if (!empty($title) && empty($newTitle) || !empty($description) && empty($newDescription)) {
             throw new InvalidArgumentException("Title and description cannot be consist only of whitespace.");
         }
         
@@ -142,15 +153,17 @@ class GenresCRUD {
         if (!empty($title)) {
             $title = preg_replace('/\s+/', ' ', trim($title)); // Заменяем все пробелы на один
             $sql .= " AND title ILIKE :title";
-            $queryParams[":title"] = '%'. trim($title) . '%';
+            $queryParams[":title"] = trim($title) . '%';
         }
     
         // Проверяем наличие параметра description
         if (!empty($description)) {
             $description = preg_replace('/\s+/', ' ', trim($description)); // Заменяем все пробелы на один
             $sql .= " AND description ILIKE :description";
-            $queryParams[":description"] = '%'. trim($description) . '%';
+            $queryParams[":description"] = trim($description) . '%';
         }
+
+        $sql .= " ORDER BY genre_id";
     
         // Добавляем параметры пагинации
         $sql .= " LIMIT :limit OFFSET :offset";
