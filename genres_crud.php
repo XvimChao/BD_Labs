@@ -59,6 +59,14 @@ class GenresCRUD {
         $stmt->execute(['title' => $trimmedTitle]);
         $count = $stmt->fetchColumn();
 
+        $stmt = $this->pdo->prepare("
+        SELECT COUNT(*) FROM genres 
+        WHERE REPLACE(REPLACE(title, ' ', ''), '-', '') = REPLACE(REPLACE(:title, ' ', ''), '-', '')
+        ");
+        $stmt->execute(['title' => $trimmedTitle]);
+        $count = $stmt->fetchColumn();
+
+
         if ($count > 0) {
             throw new InvalidArgumentException("A genre with the title:'{$trimmedTitle}' already exist.");
         }
@@ -97,6 +105,10 @@ class GenresCRUD {
             throw new InvalidArgumentException("Title must consist only of letters.");
         }
 
+        if (preg_match('/[-]/', $trimmedTitle) && preg_match('/[ ]/', $trimmedTitle)) {
+            throw new InvalidArgumentException("Title must consist only of letters.");
+        }
+        
         if (strlen($newTitle) > 255) {
             throw new InvalidArgumentException("Title cannot be longer than 255 letters.");
         }
@@ -116,6 +128,14 @@ class GenresCRUD {
         $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM genres WHERE (title = :title) AND genre_id != :id");
         $stmt->execute(['title' => $trimmedTitle,'id' => $id]);
         $count = $stmt->fetchColumn();
+
+        $stmt = $this->pdo->prepare("
+        SELECT COUNT(*) FROM genres 
+        WHERE REPLACE(REPLACE(title, ' ', ''), '-', '') = REPLACE(REPLACE(:title, ' ', ''), '-', '')
+        ");
+        $stmt->execute(['title' => $trimmedTitle]);
+        $count = $stmt->fetchColumn();
+
 
         if ($count > 0) {
             throw new InvalidArgumentException("A genre with the title:'{$trimmedTitle}' already exist.");
