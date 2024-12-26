@@ -169,8 +169,10 @@ class GenresCRUD {
         if(empty($title) && empty($description)){
             throw new InvalidArgumentException("No results found.");
         }
+        
         // Проверяем наличие параметра title
         if (!empty($title)) {
+            $title = preg_replace('/\s*-\s*/', '-', $title);
             $title = preg_replace('/\s+/', ' ', trim($title)); // Заменяем все пробелы на один
             $sql .= " AND title ILIKE :title";
             $queryParams[":title"] = trim($title) . '%';
