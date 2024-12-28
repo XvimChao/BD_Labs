@@ -27,6 +27,7 @@ class GenresCRUD {
         $trimmedDescription = $this->mb_ucfirst(trim($description));
 
         $trimmedTitle = preg_replace('/\s+/', ' ', $trimmedTitle);
+        $trimmedDescription = preg_replace('/\s+/', ' ', $trimmedDescription);
         
         //Удаляю пробелы до и после -
         $trimmedTitle = preg_replace('/\s*-\s*/', '-', $trimmedTitle);
@@ -94,7 +95,8 @@ class GenresCRUD {
         $trimmedDescription = $this->mb_ucfirst(trim($description));
 
         $trimmedTitle = preg_replace('/\s+/', ' ', $trimmedTitle);
-        
+        $trimmedDescription = preg_replace('/\s+/', ' ', $trimmedDescription);
+
         //Удаляю пробелы до и после -
         $trimmedTitle = preg_replace('/\s*-\s*/', '-', $trimmedTitle);
 
@@ -146,7 +148,7 @@ class GenresCRUD {
     }
 
     public function delete($id) {
-        $stmt = $this->pdo->prepare("DELETE FROM genres WHERE genre_id = :id");
+        $stmt = $this->pdo->prepare("DELETE FROM genres WHERE genre_id = :id AND genre_id != :id");
         $stmt->execute(['id' => $id]);
     }
 
