@@ -168,9 +168,9 @@ class GenresCRUD {
         $title = trim($title);
         $description = trim($description);
 
-        if(empty($title) && empty($description)){
-            throw new InvalidArgumentException("No results found.");
-        }
+        // if(empty($title) && empty($description)){
+        //     throw new InvalidArgumentException("No results found.");
+        // }
         
         // Проверяем наличие параметра title
         if (!empty($title)) {
