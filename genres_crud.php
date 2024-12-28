@@ -21,6 +21,14 @@ class GenresCRUD {
         return mb_strtoupper(mb_substr($str, 0, 1, $encoding), $encoding) . mb_substr($str, 1, mb_strlen($str, $encoding), $encoding);
     }
 
+    function replaceSpaces($input) {
+    // Заменяем пробелы в начале и конце строки на один пробел
+    $output = preg_replace('/^\s+|\s+$/', ' ', $input);
+    // Заменяем все множественные пробелы между словами на один пробел
+    $output = preg_replace('/\s+/', ' ', $output);
+    return $output;
+}
+
     public function create($title, $description) {
 
         $trimmedTitle = $this->mb_ucfirst(trim($title));
@@ -133,9 +141,9 @@ class GenresCRUD {
 
         $stmt = $this->pdo->prepare("
         SELECT COUNT(*) FROM genres 
-        WHERE REPLACE(REPLACE(title, ' ', ''), '-', '') = REPLACE(REPLACE(:title, ' ', ''), '-', '')
+        WHERE REPLACE(REPLACE(title, ' ', ''), '-', '') = REPLACE(REPLACE(:title, ' ', ''), '-', '') AND genre_id != :id
         ");
-        $stmt->execute(['title' => $trimmedTitle]);
+        $stmt->execute(['title' => $trimmedTitle,'id' => $id]);
         $count = $stmt->fetchColumn();
 
 
@@ -165,9 +173,6 @@ class GenresCRUD {
         $sql = "SELECT * FROM genres WHERE 1=1";
         $queryParams = [];
 
-        $title = trim($title);
-        $description = trim($description);
-
         // if(empty($title) && empty($description)){
         //     throw new InvalidArgumentException("No results found.");
         // }
@@ -175,16 +180,23 @@ class GenresCRUD {
         // Проверяем наличие параметра title
         if (!empty($title)) {
             $title = preg_replace('/\s*-\s*/', '-', $title);
-            $title = preg_replace('/\s+/', ' ', trim($title)); // Заменяем все пробелы на один
+            $title = preg_replace('/^\s+|\s+$/', ' ', $title); // Заменяем пробелы в начале и конце на один пробел
+            $title = preg_replace('/\s+/', ' ', $title); // Заменяем множественные пробелы на один
             $sql .= " AND title ILIKE :title";
-            $queryParams[":title"] =  '%'. ($title) . '%';
+            $queryParams[":title"] = '%' . ($title) . '%';
         }
     
         // Проверяем наличие параметра description
         if (!empty($description)) {
-            $description = preg_replace('/\s+/', ' ', trim($description)); // Заменяем все пробелы на один
-            $sql .= " AND description ILIKE :description";
-            $queryParams[":description"] = '%' . trim($description) . '%';
+            $description = preg_replace('/^\s+|\s+$/', ' ', $description); // Заменяем пробелы в начале и конце на один пробел
+            $description = preg_replace('/\s+/', ' ', $description); // Заменяем множественные пробелы на один
+            $sql .= " AND description ILIKE :description OR description ILIKE :endMatch OR description ILIKE :startMatch";
+            $queryParams[":description"] = '%' . ($description) . '%';
+            $startDescription = ltrim($description);
+            $queryParams[":startMatch"] = ($startDescription) . '%';
+            $endDescription = rtrim($description);
+            $queryParams[":endMatch"] = '%'. ($endDescription);
+
         }
 
         $sql .= " ORDER BY genre_id";
@@ -205,7 +217,7 @@ class GenresCRUD {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
-    
+    // Перечесление путей
 }
 
 function main() {
@@ -253,7 +265,7 @@ function main() {
                 printf("%-5s %-20s \t %-30s\n", "ID", "Title", "Description");
                 echo str_repeat("-", 60) . "\n";
                 foreach ($pages as $page) {
-                    printf("%-5s %-20s \t\t %-30s\n", trim($page['genre_id']), trim($page['title']), trim($page['description']));
+                    printf("%-5s %-17s \t\t %-32s\n", trim($page['genre_id']), trim($page['title']), trim($page['description']));
                 }
                 break;
             case '3':
