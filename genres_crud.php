@@ -177,14 +177,14 @@ class GenresCRUD {
             $title = preg_replace('/\s*-\s*/', '-', $title);
             $title = preg_replace('/\s+/', ' ', trim($title)); // Заменяем все пробелы на один
             $sql .= " AND title ILIKE :title";
-            $queryParams[":title"] = trim($title) . '%';
+            $queryParams[":title"] =  '%'. ($title) . '%';
         }
     
         // Проверяем наличие параметра description
         if (!empty($description)) {
             $description = preg_replace('/\s+/', ' ', trim($description)); // Заменяем все пробелы на один
             $sql .= " AND description ILIKE :description";
-            $queryParams[":description"] = trim($description) . '%';
+            $queryParams[":description"] = '%' . trim($description) . '%';
         }
 
         $sql .= " ORDER BY genre_id";
