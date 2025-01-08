@@ -185,7 +185,11 @@ INSERT INTO users(user_id ,username,email,password ,created_at ) VALUES
 
 SELECT setval('user_id_seq', COALESCE((SELECT MAX(user_id) FROM users), 0));
 
- 
+
+DROP SEQUENCE IF EXISTS review_id_seq CASCADE;
+
+CREATE SEQUENCE review_id_seq;
+
 DROP TABLE IF EXISTS reviews CASCADE;
  
 CREATE TABLE reviews (
