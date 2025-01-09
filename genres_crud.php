@@ -1,10 +1,6 @@
 <?php
 class GenresCRUD {
-    
-    // Проверка на вставку символов
     private $pdo;
-
-    
 
     public function __construct($dbConfig) {
         try {
@@ -223,14 +219,14 @@ class GenresCRUD {
 function main() {
     
     // Конфигурация базы данных
-    /*$dbConfig = [
+    $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
         'dbname' => 'your_dbname',
         'user' => 'postgres',
         'password' => 'water7op'
     ];
-    */
+    /*
     $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
@@ -238,7 +234,7 @@ function main() {
         'user' => 'postgres',
         'password' => 'ardin2004'
     ];
-    
+    */
     // Создаем экземпляр класса
     $crud = new GenresCRUD($dbConfig);
     

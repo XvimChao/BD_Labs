@@ -1,0 +1,38 @@
+Получение прямого родителя:
+SELECT * FROM neighbor_tree WHERE id = (SELECT parent_id FROM neighbor_tree WHERE id = 1);
+
+Получение всех родителей:
+WITH RECURSIVE parents AS (
+    SELECT * FROM neighbor_tree WHERE id = child_node_id_value
+    UNION ALL
+    SELECT nt.* FROM neighbor_tree nt INNER JOIN parents p ON nt.id = p.parent_id
+)
+SELECT * FROM parents;
+
+Получение прямых потомков:
+SELECT * FROM neighbor_tree WHERE parent_id = 1;
+
+Получение всех потомков:
+WITH RECURSIVE descendants AS (
+    SELECT * FROM neighbor_tree WHERE id = root_node_id_value
+    UNION ALL
+    SELECT nt.* FROM neighbor_tree nt INNER JOIN descendants d ON nt.parent_id = d.id
+)
+SELECT * FROM descendants;
+
+Удаление узла без поддерева:
+DELETE FROM neighbor_tree WHERE id = node_id_value;
+
+Удаление поддерева:
+DELETE FROM neighbor_tree WHERE id IN (SELECT id FROM neighbor_tree WHERE parent_id = subtree_root_id);
+
+Добавление листа:
+INSERT INTO neighbor_tree (title, parent_id) VALUES ('Новый продукт', parent_id_value);
+
+Удаление листа:
+DELETE FROM neighbor_tree WHERE id = leaf_id_value;
+
+
+
+
+

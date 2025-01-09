@@ -1,0 +1,22 @@
+Добавление листа:
+INSERT INTO path_enum (title) VALUES ('Новый продукт');
+UPDATE path_enum SET path = (SELECT path FROM path_enum WHERE id = parent_id_value) || LAST_INSERT_ID() || '/' WHERE id = LAST_INSERT_ID();
+
+Удаление узла:
+DELETE FROM path_enum WHERE id = node_id_value;
+UPDATE path_enum SET path = REPLACE(path, CONCAT('/' , node_to_delete_path), '/') WHERE path LIKE CONCAT(node_to_delete_path, '%');
+
+Удаление поддерева:
+DELETE FROM path_enum WHERE path LIKE (SELECT path || '%' FROM path_enum WHERE id = subtree_root_id);
+
+Получение прямых потомков:
+SELECT * FROM path_enum WHERE path LIKE (SELECT path FROM path_enum WHERE id = parent_id_value) || '%';
+
+Получение прямого родителя:
+SELECT * FROM path_enum WHERE path = SUBSTRING_INDEX((SELECT path FROM path_enum WHERE id = child_id_value), '/', -2);
+
+Получение всех потомков:
+SELECT * FROM path_enum WHERE path LIKE (SELECT path || '%' FROM path_enum WHERE id = root_node_id);
+
+Получение всех родителей:
+SELECT * FROM path_enum WHERE (SELECT path FROM path_enum WHERE id = child_node_id_value) LIKE CONCAT(path, '%');
