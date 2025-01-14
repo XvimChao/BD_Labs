@@ -2,12 +2,74 @@
 class GenresCRUD {
     private $pdo;
 
+    
     public function __construct($dbConfig) {
         try {
             $this->pdo = new PDO("pgsql:host={$dbConfig['host']};port={$dbConfig['port']};dbname={$dbConfig['dbname']}", $dbConfig['user'], $dbConfig['password']);
             $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
             die("Could not connect to the database: " . $e->getMessage());
+        }
+    }
+    
+    public function equalizeStrings(array $strings, $maxLength) {
+        $equalizedStrings = [];
+    
+        foreach ($strings as $string) {
+            // Обрезаем строку до максимальной длины
+            $trimmedString = mb_substr(trim($string), 0, $maxLength);
+            
+            if (mb_strlen($trimmedString) < $maxLength) {
+                $equalizedStrings[] = str_pad($trimmedString, $maxLength);
+            } else {
+                // Если строка уже равна или больше максимальной длины
+                $equalizedStrings[] = $trimmedString;
+            }
+        }
+    
+        return $equalizedStrings;
+    }
+
+
+    public function _retrieve() {
+        $pages = $this->retrieveAll();
+    
+        // Инициализация максимальных длин для каждого столбца
+        $maxIdLength = 5;
+        $maxTitleLength = strlen("Title");
+        $maxDescriptionLength = 50; // Ограничение на длину описания
+    
+        // Определяем максимальные длины для каждого столбца
+        foreach ($pages as $page) {
+            $maxTitleLength = max($maxTitleLength, strlen(trim($page['title'])));
+        }
+    
+        // Заголовки
+        printf("%-*s\t%-*s\t%-*s\n", 
+            $maxIdLength, "ID", 
+            $maxTitleLength, "Title", 
+            $maxDescriptionLength, "Description"
+        );
+    
+        echo str_repeat("-", $maxIdLength + $maxTitleLength + $maxDescriptionLength + 4) . "\n";
+    
+        // Подготовка массивов для выравнивания
+        $titles = [];
+        
+        foreach ($pages as $page) {
+            $titles[] = trim($page['title']);
+        }
+    
+        // Выравнивание строк заголовков
+        $equalizedTitles = $this->equalizeStrings($titles, max(20, $maxTitleLength)); // Установите желаемую максимальную ширину для заголовков
+    
+        // Вывод данных
+        foreach ($pages as $index => $page) {
+            printf("%-*s\t%-*s%-*s\n", 
+                $maxIdLength, trim($page['genre_id']), 
+                max(20, $maxTitleLength), $equalizedTitles[$index], 
+                $maxDescriptionLength, trim($page['description'], $maxDescriptionLength) 
+            );
         }
     }
 
@@ -272,14 +334,9 @@ function main() {
                 break;
 
             case '2':
-                $pages = $crud->retrieveAll();
-                
-                printf("%-5s %-20s \t %-30s\n", "ID", "Title", "Description");
-                echo str_repeat("-", 60) . "\n";
-                foreach ($pages as $page) {
-                    printf("%-5s %-17s \t\t %-32s\n", trim($page['genre_id']), trim($page['title']), trim($page['description']));
-                }
+                $crud->_retrieve(); 
                 break;
+
             case '3':
                 $id = readline("Enter ID: ");
 
