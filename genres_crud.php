@@ -175,24 +175,41 @@ class GenresCRUD {
         
         // Проверяем наличие параметра title
         if (!empty($title)) {
-            $title = preg_replace('/\s*-\s*/', '-', $title);
-            $title = preg_replace('/^\s+|\s+$/', ' ', $title); // Заменяем пробелы в начале и конце на один пробел
-            $title = preg_replace('/\s+/', ' ', $title); // Заменяем множественные пробелы на один
-            $sql .= " AND title ILIKE :title";
-            $queryParams[":title"] = '%' . ($title) . '%';
+            if($title === ' '){
+                $sql .= " AND title ILIKE :title";
+                $queryParams[":title"] = '%' . ($title) . '%';
+            }
+            else{
+                $title = preg_replace('/\s*-\s*/', '-', $title);
+                $title = preg_replace('/^\s+|\s+$/', ' ', $title); // Заменяем пробелы в начале и конце на один пробел
+                $title = preg_replace('/\s+/', ' ', $title); // Заменяем множественные пробелы на один
+                $sql .= " AND title ILIKE :title";
+                $queryParams[":title"] = '%' . ($title) . '%';
+            }
         }
     
         // Проверяем наличие параметра description
         if (!empty($description)) {
-            $description = preg_replace('/^\s+|\s+$/', ' ', $description); // Заменяем пробелы в начале и конце на один пробел
-            $description = preg_replace('/\s+/', ' ', $description); // Заменяем множественные пробелы на один
-            $sql .= " AND description ILIKE :description OR description ILIKE :endMatch OR description ILIKE :startMatch";
-            $queryParams[":description"] = '%' . ($description) . '%';
-            $startDescription = ltrim($description);
-            $queryParams[":startMatch"] = ($startDescription) . '%';
-            $endDescription = rtrim($description);
-            $queryParams[":endMatch"] = '%'. ($endDescription);
-
+            if($description === ' '){
+                $sql .= " AND description ILIKE :description";
+                $queryParams[":description"] = '%' . ($description) . '%';
+            }
+            else{
+                if(empty(trim($description))){
+                    $description = '';
+                    $sql .= " AND description ILIKE :description";
+                    $queryParams[":description"] = '%' . ($description) . '%';
+                }
+                $description = preg_replace('/^\s+|\s+$/', ' ', $description); // Заменяем пробелы в начале и конце на один пробел
+                $description = preg_replace('/\s+/', ' ', $description); // Заменяем множественные пробелы на один
+                $sql .= " AND description ILIKE :description OR description ILIKE :endDescr OR description ILIKE :startDescr";
+                $queryParams[":description"] = '%' . ($description) . '%';
+                $startDescription = ltrim($description);
+                $queryParams[":startDescr"] = ($startDescription) . '%';
+                $endDescription = rtrim($description);
+                $queryParams[":endDescr"] = '%'. ($endDescription);
+                
+            }
         }
 
         $sql .= " ORDER BY genre_id";
@@ -213,7 +230,6 @@ class GenresCRUD {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
-    // Перечесление путей
 }
 
 function main() {
@@ -273,9 +289,9 @@ function main() {
                 }
                 $page = $crud->retrieve($id);
                 if ($page) {
-                    printf("%-5s %-15s %-30s\n", "ID", "Title", "Description");
+                    printf("%-5s %-20s \t %-30s\n", "ID", "Title", "Description");
                     echo str_repeat("-", 60) . "\n";
-                    printf("%-5s  %-15s \t %-30s\n", trim($page['genre_id']), trim($page['title']), trim($page['description']));
+                    printf("%-5s %-17s \t\t %-32s\n", trim($page['genre_id']), trim($page['title']), trim($page['description']));
                     
                 } else {
                     echo "Genre not found.\n";
@@ -380,10 +396,10 @@ function main() {
                     // Вызов метода nameSearch с двумя параметрами
                     $results = $crud->nameSearch($title, $description, $limit, $offset);
                     if (!empty($results)) {
-                        printf("%-5s %-15s \t %-30s\n", "ID", "Title", "Description");
+                        printf("%-5s %-20s \t %-30s\n", "ID", "Title", "Description");
                         echo str_repeat("-", 60) . "\n";
                         foreach ($results as $page) {
-                            printf("%-5s  %-15s \t %-30s\n", trim($page['genre_id']), trim($page['title']), trim($page['description']));
+                            printf("%-5s %-17s \t\t %-32s\n", trim($page['genre_id']), trim($page['title']), trim($page['description']));
                         }
                     } else {
                         echo "No results found.\n";
