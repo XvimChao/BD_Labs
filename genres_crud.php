@@ -11,39 +11,55 @@ class GenresCRUD {
             die("Could not connect to the database: " . $e->getMessage());
         }
     }
-    
-    public function equalizeStrings(array $strings, $maxLength) {
-        $equalizedStrings = [];
-    
-        foreach ($strings as $string) {
-            // Обрезаем строку до максимальной длины
-            $trimmedString = mb_substr(trim($string), 0, $maxLength);
-            
-            if (mb_strlen($trimmedString) < $maxLength) {
-                $equalizedStrings[] = str_pad($trimmedString, $maxLength);
-            } else {
-                // Если строка уже равна или больше максимальной длины
-                $equalizedStrings[] = $trimmedString;
-            }
+
+
+
+    public function mb_str_pad($input, $pad_length) {
+        $input_length = mb_strlen($input);
+        
+        if ($input_length >= $pad_length) {
+            return $input;
         }
     
-        return $equalizedStrings;
+        $pad = str_repeat(" ", $pad_length - $input_length);
+
+        return $input . $pad;
+        
     }
+    /*public function mb_str_pad(array $strings, $pad_length) {
+        $equalizedStrings = [];
+        foreach ($strings as $string) {
+            $input_length = mb_strlen($string);
+            if (mb_strlen($string) < $maxLength) {
+                $pad = str_repeat(" ", $pad_length - $input_length);
+                $equalizedStrings[] = $input . $pad;
+            }
+            else{
+                $equalizedStrings[] = $string;
+            }
+           
+            
+        }
+        return $equalizedStringsp;
+    }*/
 
-
-    public function _retrieve() {
-        $pages = $this->retrieveAll();
-    
+    public function _retrieve($results) {
+        if(!empty($results)){
+            $pages = $results;
+        }
+        else{
+            $pages = $this->retrieveAll();
+        }
         // Инициализация максимальных длин для каждого столбца
         $maxIdLength = 5;
-        $maxTitleLength = strlen("Title");
+        $maxTitleLength = mb_strlen("Title");
         $maxDescriptionLength = 50; // Ограничение на длину описания
     
         // Определяем максимальные длины для каждого столбца
         foreach ($pages as $page) {
-            $maxTitleLength = max($maxTitleLength, strlen(trim($page['title'])));
+            $maxTitleLength = max($maxTitleLength, mb_strlen(trim($page['title'])));
         }
-    
+
         // Заголовки
         printf("%-*s\t%-*s\t%-*s\n", 
             $maxIdLength, "ID", 
@@ -53,25 +69,26 @@ class GenresCRUD {
     
         echo str_repeat("-", $maxIdLength + $maxTitleLength + $maxDescriptionLength + 4) . "\n";
     
-        // Подготовка массивов для выравнивания
         $titles = [];
-        
-        foreach ($pages as $page) {
+    
+        /*foreach ($pages as $page) {
             $titles[] = trim($page['title']);
         }
-    
-        // Выравнивание строк заголовков
-        $equalizedTitles = $this->equalizeStrings($titles, max(20, $maxTitleLength)); // Установите желаемую максимальную ширину для заголовков
-    
-        // Вывод данных
-        foreach ($pages as $index => $page) {
-            printf("%-*s\t%-*s%-*s\n", 
+
+        $equalizedTitles = $this->equalizeStrings($titles, max($maxTitleLength, 20));
+        */
+        
+        foreach ($pages as $page) {
+            printf("%-*s\t%-*s \t%-*s\n", 
                 $maxIdLength, trim($page['genre_id']), 
-                max(20, $maxTitleLength), $equalizedTitles[$index], 
-                $maxDescriptionLength, trim($page['description'], $maxDescriptionLength) 
+                $maxTitleLength, $this->mb_str_pad(trim($page['title']), $maxTitleLength),
+                $maxDescriptionLength, trim($page['description'])
             );
         }
     }
+
+    
+
 
     public function mb_ucfirst($str, $encoding='UTF-8') {
         $str = mb_strtolower($str, $encoding);
@@ -231,11 +248,7 @@ class GenresCRUD {
         $sql = "SELECT * FROM genres WHERE 1=1";
         $queryParams = [];
 
-        // if(empty($title) && empty($description)){
-        //     throw new InvalidArgumentException("No results found.");
-        // }
         
-        // Проверяем наличие параметра title
         if (!empty($title)) {
             if($title === ' '){
                 $sql .= " AND title ILIKE :title";
@@ -297,14 +310,14 @@ class GenresCRUD {
 function main() {
     
     // Конфигурация базы данных
-    $dbConfig = [
+    /*$dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
         'dbname' => 'your_dbname',
         'user' => 'postgres',
         'password' => 'water7op'
     ];
-    /*
+    */
     $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
@@ -312,7 +325,7 @@ function main() {
         'user' => 'postgres',
         'password' => 'ardin2004'
     ];
-    */
+    
     // Создаем экземпляр класса
     $crud = new GenresCRUD($dbConfig);
     
@@ -334,7 +347,7 @@ function main() {
                 break;
 
             case '2':
-                $crud->_retrieve(); 
+                $crud->_retrieve($results); 
                 break;
 
             case '3':
@@ -453,11 +466,7 @@ function main() {
                     // Вызов метода nameSearch с двумя параметрами
                     $results = $crud->nameSearch($title, $description, $limit, $offset);
                     if (!empty($results)) {
-                        printf("%-5s %-20s \t %-30s\n", "ID", "Title", "Description");
-                        echo str_repeat("-", 60) . "\n";
-                        foreach ($results as $page) {
-                            printf("%-5s %-17s \t\t %-32s\n", trim($page['genre_id']), trim($page['title']), trim($page['description']));
-                        }
+                        $crud->_retrieve($results);
                     } else {
                         echo "No results found.\n";
                     }
