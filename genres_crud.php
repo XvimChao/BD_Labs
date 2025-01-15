@@ -54,7 +54,11 @@ class GenresCRUD {
         $maxIdLength = 5;
         $maxTitleLength = mb_strlen("Title");
         $maxDescriptionLength = 50; // Ограничение на длину описания
-    
+        
+
+        
+        
+
         // Определяем максимальные длины для каждого столбца
         foreach ($pages as $page) {
             $maxTitleLength = max($maxTitleLength, mb_strlen(trim($page['title'])));
@@ -66,17 +70,8 @@ class GenresCRUD {
             $maxTitleLength, "Title", 
             $maxDescriptionLength, "Description"
         );
-    
+        
         echo str_repeat("-", $maxIdLength + $maxTitleLength + $maxDescriptionLength + 4) . "\n";
-    
-        $titles = [];
-    
-        /*foreach ($pages as $page) {
-            $titles[] = trim($page['title']);
-        }
-
-        $equalizedTitles = $this->equalizeStrings($titles, max($maxTitleLength, 20));
-        */
         
         foreach ($pages as $page) {
             printf("%-*s\t%-*s \t%-*s\n", 
@@ -85,6 +80,7 @@ class GenresCRUD {
                 $maxDescriptionLength, trim($page['description'])
             );
         }
+        
     }
 
     
@@ -310,14 +306,14 @@ class GenresCRUD {
 function main() {
     
     // Конфигурация базы данных
-    /*$dbConfig = [
+    $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
         'dbname' => 'your_dbname',
         'user' => 'postgres',
         'password' => 'water7op'
     ];
-    */
+    /*
     $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
@@ -325,7 +321,7 @@ function main() {
         'user' => 'postgres',
         'password' => 'ardin2004'
     ];
-    
+    */
     // Создаем экземпляр класса
     $crud = new GenresCRUD($dbConfig);
     
@@ -347,6 +343,7 @@ function main() {
                 break;
 
             case '2':
+                $results = "";
                 $crud->_retrieve($results); 
                 break;
 
@@ -362,6 +359,7 @@ function main() {
                     printf("%-5s %-20s \t %-30s\n", "ID", "Title", "Description");
                     echo str_repeat("-", 60) . "\n";
                     printf("%-5s %-17s \t\t %-32s\n", trim($page['genre_id']), trim($page['title']), trim($page['description']));
+                    
                     
                 } else {
                     echo "Genre not found.\n";

@@ -119,20 +119,19 @@ class TreeCRUD {
     }
 }
 
-// Основной код для взаимодействия с пользователем
 function main() {
     
-    // Конфигурация базы данных
-    /*$dbConfig = [
+    
+    $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
         'dbname' => 'your_dbname',
         'user' => 'postgres',
         'password' => 'water7op'
     ];
-    */
     
-    // Пример конфигурации базы данных
+    
+    /*
     $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
@@ -140,7 +139,7 @@ function main() {
         'user' => 'postgres',
         'password' => 'ardin2004'
     ];
-    
+    */
     // Создаем экземпляр класса
     $crud = new TreeCRUD($dbConfig);
     
@@ -191,7 +190,7 @@ function main() {
                     $crud->deleteLeaf(intval($leafIdToDelete));
                     echo "Leaf deleted.\n";
                 } catch (Exception $e) {
-                    echo "Error: " . $e.getMessage() . "\n";
+                    echo "Error: " . $e->getMessage() . "\n";
                 }
                 break;
 
@@ -205,16 +204,16 @@ function main() {
                     break;
                 }
 
-                try {
+                /*try {
                     if ($crud->retrieve(intval($subtreeIdToDelete))) {  // Проверка существования узла
                         echo "Subtree deleted.\n";
-                        crud.deleteSubtree(intval(subtreeIdToDelete));
+                        $crud->deleteSubtree(intval($subtreeIdToDelete));
                     } else {
                         echo "Node not found.\n";
                     }
                 } catch (Exception $e) {
-                    echo "Error: " . $e.getMessage() . "\n";
-                }
+                    echo "Error: " . $e->getMessage() . "\n";
+                }*/
                 break;
 
             case '5':
@@ -228,10 +227,10 @@ function main() {
                 }
 
                 try {
-                    $crud.deleteNodeWithoutChildren(intval($nodeIdToDelete));
+                    $crud->deleteNodeWithoutChildren(intval($nodeIdToDelete));
                     echo "Node deleted.\n";
                 } catch (Exception $e) {
-                    echo "Error: " . $e.getMessage() . "\n";
+                    echo "Error: " . $e->getMessage() . "\n";
                 }
                 break;
 
@@ -246,7 +245,7 @@ function main() {
                }
 
                try {
-                   $childrenResults = crud.getDirectChildren(intval($parentIDForChildren));
+                   $childrenResults = $crud->getDirectChildren(intval($parentIDForChildren));
                    if (!empty($childrenResults)) {
                        printf("%-5s %-20s \n", "ID", "Title");
                        foreach ($childrenResults as $child) { 
@@ -256,7 +255,7 @@ function main() {
                        echo "No children found.\n"; 
                    }
                } catch (Exception $e) { 
-                   echo "Error: ". $e.getMessage() . "\n"; 
+                   echo "Error: ". $e->getMessage() . "\n"; 
                }
                break;
 
@@ -271,7 +270,7 @@ function main() {
                }
 
                try { 
-                   $parentResult= $crud.getParent(intval($nodeIDForParent)); 
+                   $parentResult= $crud->getParent(intval($nodeIDForParent)); 
                    if ($parentResult){ 
                        printf("%-5s %-20s \n", "ID", "Title"); 
                        printf("%-5s %-20s \n", $parentResult['id'], $parentResult['title']); 
@@ -279,7 +278,7 @@ function main() {
                        echo "Parent not found.\n"; 
                    } 
                } catch (Exception $e){ 
-                   echo "Error: ". $e.getMessage() . "\n"; 
+                   echo "Error: ". $e->getMessage() . "\n"; 
                }
                break;
 
@@ -294,7 +293,7 @@ function main() {
                }
 
                try { 
-                   $descendantsResults= $crud.getAllDescendants(intval($nodeIDForDescendants)); 
+                   $descendantsResults= $crud->getAllDescendants(intval($nodeIDForDescendants)); 
                    if (!empty($descendantsResults)){ 
                        printf("%-5s %-20s \n", "ID", "Title"); 
                        foreach ($descendantsResults as $descendant){ 
@@ -304,7 +303,7 @@ function main() {
                        echo "No descendants found.\n"; 
                    } 
                } catch (Exception $e){ 
-                   echo "Error: ". $e.getMessage() . "\n"; 
+                   echo "Error: ". $e->getMessage() . "\n"; 
                }
                break;
 
@@ -319,19 +318,19 @@ function main() {
                }
 
                try { 
-                   $parentsResults= $rud.getAllParents(intval($nodeIDForParents)); 
+                   $parentsResults= $crud->getAllParents(intval($nodeIDForParents)); 
 
                    if (!empty($parentsResults)){ 
                        printf("%-5s %-20s \n", "ID", "Title"); 
 
                        foreach ($parentsResults as $parent){  
-                           printf("%-5s %-20s \n", $arent['id'], $parent['title']);  
+                           printf("%-5s %-20s \n", $parent['id'], $parent['title']);  
                        }  
                    } else {  
                        echo "No parents found.\n";  
                    }  
                } catch (Exception $e){  
-                   echo "Error: ". e.getMessage() . "\n";  
+                   echo "Error: ". $e->getMessage() . "\n";  
                }  
               break;  
 
