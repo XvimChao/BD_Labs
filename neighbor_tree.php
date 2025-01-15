@@ -12,6 +12,11 @@ class TreeCRUD {
     }
 
     
+    public function retrieve($id) {
+        $stmt = $this->pdo->prepare("SELECT * FROM neighbor_tree WHERE id = :id");
+        $stmt->execute(['id' => $id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) !== false; // Возвращает true, если узел существует
+    }
 
     // Добавление листа
     public function addLeaf($title, $parentId) {
@@ -120,8 +125,8 @@ class TreeCRUD {
 }
 
 function main() {
-    
-    
+ 
+    /*
     $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
@@ -129,9 +134,9 @@ function main() {
         'user' => 'postgres',
         'password' => 'water7op'
     ];
+    */
     
     
-    /*
     $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
@@ -139,12 +144,11 @@ function main() {
         'user' => 'postgres',
         'password' => 'ardin2004'
     ];
-    */
     // Создаем экземпляр класса
     $crud = new TreeCRUD($dbConfig);
     
     while (true) {
-        echo "\n1. Display Tree\n2. Add Leaf\n3. Delete Leaf\n4. Delete Subtree\n5. Delete Node Without Children\n6. Get Direct Children\n7. Get Parent\n8. Get All Descendants\n9. Get All Parents\n10. Exit\n";
+        echo "\n1. Вывести дерево\n2. Добавить лист\n3. Удалить лист\n4. Удалить поддерево\n5. Удалить узел без поддерева\n6. Вывести прямых потомков\n7. Вывести прямого родителя\n8. Вывести всех потомков\n9. Вывести всех родителей\n10. Выйти\n";
 
         $choice = readline("Choose an option: ");
         
@@ -204,8 +208,8 @@ function main() {
                     break;
                 }
 
-                /*try {
-                    if ($crud->retrieve(intval($subtreeIdToDelete))) {  // Проверка существования узла
+                try {
+                    if ($crud->retrieve(intval($subtreeIdToDelete))) { 
                         echo "Subtree deleted.\n";
                         $crud->deleteSubtree(intval($subtreeIdToDelete));
                     } else {
@@ -213,7 +217,7 @@ function main() {
                     }
                 } catch (Exception $e) {
                     echo "Error: " . $e->getMessage() . "\n";
-                }*/
+                }
                 break;
 
             case '5':
