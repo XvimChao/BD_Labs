@@ -26,53 +26,39 @@ class GenresCRUD {
         return $input . $pad;
         
     }
-    /*public function mb_str_pad(array $strings, $pad_length) {
-        $equalizedStrings = [];
-        foreach ($strings as $string) {
-            $input_length = mb_strlen($string);
-            if (mb_strlen($string) < $maxLength) {
-                $pad = str_repeat(" ", $pad_length - $input_length);
-                $equalizedStrings[] = $input . $pad;
-            }
-            else{
-                $equalizedStrings[] = $string;
-            }
-           
-            
-        }
-        return $equalizedStringsp;
-    }*/
 
-    public function _retrieve($results) {
+    public function _retrieve_old($results) {
+
         if(!empty($results)){
             $pages = $results;
         }
         else{
             $pages = $this->retrieveAll();
         }
-        // Инициализация максимальных длин для каждого столбца
-        $maxIdLength = 5;
-        $maxTitleLength = mb_strlen("Title");
-        $maxDescriptionLength = 50; // Ограничение на длину описания
-        
 
+        $header = [
+            'genre_id' => 'ID',
+            'title' => 'Title',
+            'description' => 'Description'
+        ];
         
-        
+        $maxIdLength = strlen($header['genre_id']);
+        $maxTitleLength = mb_strlen($header['title']);
+        $maxDescriptionLength = 50;
 
         // Определяем максимальные длины для каждого столбца
         foreach ($pages as $page) {
             $maxTitleLength = max($maxTitleLength, mb_strlen(trim($page['title'])));
+            $maxIdLength = max($maxTitleLength, strlen($page['genre_id']));
         }
 
-        // Заголовки
-        printf("%-*s\t%-*s\t%-*s\n", 
-            $maxIdLength, "ID", 
-            $maxTitleLength, "Title", 
-            $maxDescriptionLength, "Description"
+        printf("%-*s\t%-*s \t%-*s\n", 
+            $maxIdLength, trim($header['genre_id']), 
+            $maxTitleLength, $this->mb_str_pad(trim($header['title']), $maxTitleLength),
+            $maxDescriptionLength, trim($header['description'])
         );
-        
+
         echo str_repeat("-", $maxIdLength + $maxTitleLength + $maxDescriptionLength + 4) . "\n";
-        
         foreach ($pages as $page) {
             printf("%-*s\t%-*s \t%-*s\n", 
                 $maxIdLength, trim($page['genre_id']), 
@@ -80,10 +66,59 @@ class GenresCRUD {
                 $maxDescriptionLength, trim($page['description'])
             );
         }
-        
     }
 
-    
+    public function _retrieve($results) {
+
+        $header = [
+            'genre_id' => 'ID',
+            'title' => 'Title',
+            'description' => 'Description'
+        ];
+        $fill_sym = ' ';
+
+        if(!empty($results)){
+            $pages = $results;
+        }
+        else{
+            $pages = $this->retrieveAll();
+        }
+
+        
+
+        $width_columns = array();
+        foreach($header as $head_key => $head){
+            if(!isset($width_columns[$head_key])){
+                $width_columns[$head_key] = '';
+            }
+            $width_columns[$head_key] = max($width_columns[$head_key], mb_strlen(trim($head)));
+        }
+
+        // Определяем максимальные длины для каждого столбца
+        foreach ($pages as $page) {
+            foreach($page as $column_key => $column_value){
+                $width_columns[$column_key] = max($width_columns[$column_key], mb_strlen(trim($column_value)));
+            }
+        }
+
+        $head_str = '';
+        $divisor_str = '';
+        foreach($header as $head_key => $head){
+            $head_str .= $head.str_repeat($fill_sym, $width_columns[$head_key]-mb_strlen($head)+2);
+            $divisor_str .= str_repeat("-", $width_columns[$head_key]);
+        }
+
+        echo $head_str."\n";
+        echo $divisor_str."\n";
+        
+        foreach ($pages as $page) {
+            $page_str = '';
+            foreach($page as $column_key => $column_value){
+                $page_str .= $column_value.str_repeat($fill_sym, $width_columns[$column_key]-mb_strlen($column_value)+2);
+            }
+            echo $page_str."\n";
+        }
+    }
 
 
     public function mb_ucfirst($str, $encoding='UTF-8') {
@@ -164,7 +199,7 @@ class GenresCRUD {
     public function retrieve($id) {
         $stmt = $this->pdo->prepare("SELECT * FROM genres WHERE genre_id = :id");
         $stmt->execute(['id' => $id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function update($id, $title, $description) {
@@ -306,7 +341,6 @@ class GenresCRUD {
 function main() {
     
     // Конфигурация базы данных
-    /*
     $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
@@ -314,7 +348,7 @@ function main() {
         'user' => 'postgres',
         'password' => 'water7op'
     ];
-    */
+    /*
     $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
@@ -322,12 +356,14 @@ function main() {
         'user' => 'postgres',
         'password' => 'ardin2004'
     ];
+    */
     // Создаем экземпляр класса
     $crud = new GenresCRUD($dbConfig);
     
     while (true) {
         echo "\n1. Create\n2. Retrieve All\n3. Retrieve\n4. Update\n5. Delete\n6. Delete Many\n7. Search\n8. Exit\n";
 
+       
         $choice = readline("Choose an option: ");
         
         switch ($choice) {
@@ -356,11 +392,7 @@ function main() {
                 }
                 $page = $crud->retrieve($id);
                 if ($page) {
-                    printf("%-5s %-20s \t %-30s\n", "ID", "Title", "Description");
-                    echo str_repeat("-", 60) . "\n";
-                    printf("%-5s %-17s \t\t %-32s\n", trim($page['genre_id']), trim($page['title']), trim($page['description']));
-                    
-                    
+                    $crud->_retrieve($page); 
                 } else {
                     echo "Genre not found.\n";
                 }
