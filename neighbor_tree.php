@@ -11,7 +11,55 @@ class TreeCRUD {
         }
     }
 
+    public function _retrieve($results) {
+        $header = [
+            'id' => 'ID',
+            'title' => 'Title',
+            'parent_id' => "Parent_ID"
+        ];
+        $fill_sym = ' ';
     
+    
+        $pages = $results;
+        
+    
+        $width_columns = [];
+        foreach ($header as $head_key => $head) {
+            $width_columns[$head_key] = mb_strlen(trim($head));
+        }
+        
+        // Определяем максимальные длины для каждого столбца
+        foreach ($pages as $page) {
+            foreach ($page as $column_key => $column_value) {
+                $column_value_str = (string) ($column_value ?? '');
+                if (isset($width_columns[$column_key])) {
+                    $width_columns[$column_key] = max($width_columns[$column_key], mb_strlen(trim($column_value_str)));
+                }
+            }
+        }
+    
+        // Формируем заголовок и разделитель
+        $head_str = '';
+        $divisor_str = '';
+        foreach ($header as $head_key => $head) {
+            $head_str .= $head . str_repeat($fill_sym, $width_columns[$head_key] - mb_strlen($head) + 2);
+            $divisor_str .= str_repeat("-", $width_columns[$head_key]);
+        }
+    
+        echo $head_str . "\n";
+        echo $divisor_str . "\n";
+    
+        // Выводим данные страниц
+        foreach ($pages as $page) {
+            $page_str = '';
+            foreach($page as $column_key => $column_value){
+                $value_to_print = (string) ($page[$column_key] ?? '');
+                $page_str .= $value_to_print.str_repeat($fill_sym, $width_columns[$column_key]-mb_strlen($value_to_print)+2);
+            }
+            echo $page_str."\n";
+        }
+    }
+
     public function retrieve($id) {
         $stmt = $this->pdo->prepare("SELECT * FROM neighbor_tree WHERE id = :id");
         $stmt->execute(['id' => $id]);
@@ -20,13 +68,36 @@ class TreeCRUD {
 
     // Добавление листа
     public function addLeaf($title, $parentId) {
+        $trimmedTitle = trim($title);
+
+        if (preg_match('/[^a-zA-Zа-яА-ЯёЁ0-9 ,-]/u', $trimmedTitle)) {
+            throw new InvalidArgumentException("Incorrect title.");
+        }
+        // Проверка на существование названия
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM neighbor_tree WHERE (title = :title)");
+        $stmt->execute(['title' => $trimmedTitle]);
+        $count = $stmt->fetchColumn();
+
+       
+        if ($count > 0) {
+            throw new InvalidArgumentException("Title '{$trimmedTitle}' already exist.");
+        }
         $stmt = $this->pdo->prepare("INSERT INTO neighbor_tree (title, parent_id) VALUES (:title, :parent_id)");
-        $stmt->execute(['title' => $title, 'parent_id' => $parentId]);
+        $stmt->execute(['title' => $trimmedTitle, 'parent_id' => $parentId]);
     }
 
     // Удаление листа
     public function deleteLeaf($id) {
-        $stmt = $this->pdo->prepare("DELETE FROM neighbor_tree WHERE id = :id AND NOT EXISTS (SELECT 1 FROM neighbor_tree WHERE parent_id = :id)");
+        $stmtCheck = $this->pdo->prepare("SELECT COUNT(*) FROM neighbor_tree WHERE parent_id = :id");
+        $stmtCheck->execute(['id' => $id]);
+        $isParent = $stmtCheck->fetchColumn() > 0;
+
+        if ($isParent) {
+            throw new InvalidArgumentException("Delete is not possible because the node is a parent.");
+        }
+
+        // Если узел не является родителем, выполняем удаление
+        $stmt = $this->pdo->prepare("DELETE FROM neighbor_tree WHERE id = :id");
         $stmt->execute(['id' => $id]);
     }
 
@@ -38,8 +109,11 @@ class TreeCRUD {
 
     // Удаление узла без поддерева
     public function deleteNodeWithoutChildren($id) {
-        $stmt = $this->pdo->prepare("DELETE FROM neighbor_tree WHERE id = :id AND NOT EXISTS (SELECT 1 FROM neighbor_tree WHERE parent_id = :id)");
-        $stmt->execute(['id' => $id]);
+        $stmtUpdateChildren = $this->pdo->prepare("UPDATE neighbor_tree SET parent_id = (SELECT parent_id FROM neighbor_tree WHERE id = :id) WHERE parent_id = :id");
+        $stmtUpdateChildren->execute(['id' => $id]);
+
+        $stmtDelete = $this->pdo->prepare("DELETE FROM neighbor_tree WHERE id = :id");
+        $stmtDelete->execute(['id' => $id]);
     }
 
     // Получение прямых потомков
@@ -53,7 +127,7 @@ class TreeCRUD {
     public function getParent($id) {
         $stmt = $this->pdo->prepare("SELECT * FROM neighbor_tree WHERE id = (SELECT parent_id FROM neighbor_tree WHERE id = :id)");
         $stmt->execute(['id' => $id]);
-        return $stmt->fetch(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     // Получение всех потомков
@@ -126,6 +200,7 @@ class TreeCRUD {
 
 function main() {
  
+    /*
     $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
@@ -135,7 +210,7 @@ function main() {
         ];
         
         
-    /*
+    */
     $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
@@ -143,7 +218,6 @@ function main() {
         'user' => 'postgres',
         'password' => 'ardin2004'
     ];
-    */
     // Создаем экземпляр класса
     $crud = new TreeCRUD($dbConfig);
     
@@ -155,17 +229,15 @@ function main() {
         switch ($choice) {
             case '1':
                 try {
-                    $crud->displayTree();  // Используем оператор '->' для вызова метода
+                    $crud->displayTree();
                 } catch (Exception $e) {  
-                    echo "Error: " . $e->getMessage() . "\n";  // Используем '->' для получения сообщения об ошибке
+                    echo "Error: " . $e->getMessage() . "\n";
                 }
                 break;
             case '2':
                 // Добавление листа
-                echo "Enter title: ";
-                $title = readline();
-                echo "Enter parent ID: ";
-                $parentId = readline();
+                $title = readline("Enter title: ");
+                $parentId = readline("Enter parent ID: ");
                 
                 if (!filter_var($parentId, FILTER_VALIDATE_INT)) {
                     echo "Invalid Parent ID.\n";
@@ -249,15 +321,13 @@ function main() {
                }
 
                try {
-                   $childrenResults = $crud->getDirectChildren(intval($parentIDForChildren));
-                   if (!empty($childrenResults)) {
-                       printf("%-5s %-20s \n", "ID", "Title");
-                       foreach ($childrenResults as $child) { 
-                           printf("%-5s %-20s \n", $child['id'], $child['title']);
-                       }
-                   } else { 
-                       echo "No children found.\n"; 
-                   }
+                    $childrenResults = $crud->getDirectChildren(intval($parentIDForChildren));
+                    if (!empty($childrenResults)) {
+                        $crud->_retrieve($childrenResults);
+                    }
+                    else{
+                        throw new InvalidArgumentException ("No children found."); 
+                    }
                } catch (Exception $e) { 
                    echo "Error: ". $e->getMessage() . "\n"; 
                }
@@ -276,10 +346,9 @@ function main() {
                try { 
                    $parentResult= $crud->getParent(intval($nodeIDForParent)); 
                    if ($parentResult){ 
-                       printf("%-5s %-20s \n", "ID", "Title"); 
-                       printf("%-5s %-20s \n", $parentResult['id'], $parentResult['title']); 
+                        $crud->_retrieve($parentResult);
                    } else { 
-                       echo "Parent not found.\n"; 
+                       throw new InvalidArgumentException ("Parent not found."); 
                    } 
                } catch (Exception $e){ 
                    echo "Error: ". $e->getMessage() . "\n"; 
@@ -299,12 +368,9 @@ function main() {
                try { 
                    $descendantsResults= $crud->getAllDescendants(intval($nodeIDForDescendants)); 
                    if (!empty($descendantsResults)){ 
-                       printf("%-5s %-20s \n", "ID", "Title"); 
-                       foreach ($descendantsResults as $descendant){ 
-                           printf("%-5s %-20s \n", $descendant['id'], $descendant['title']); 
-                       } 
+                        $crud->_retrieve($descendantsResults);
                    } else { 
-                       echo "No descendants found.\n"; 
+                       throw new InvalidArgumentException ("No descendants found."); 
                    } 
                } catch (Exception $e){ 
                    echo "Error: ". $e->getMessage() . "\n"; 
@@ -325,13 +391,9 @@ function main() {
                    $parentsResults= $crud->getAllParents(intval($nodeIDForParents)); 
 
                    if (!empty($parentsResults)){ 
-                       printf("%-5s %-20s \n", "ID", "Title"); 
-
-                       foreach ($parentsResults as $parent){  
-                           printf("%-5s %-20s \n", $parent['id'], $parent['title']);  
-                       }  
+                        $crud->_retrieve($parentsResults);  
                    } else {  
-                       echo "No parents found.\n";  
+                       throw new InvalidArgumentException ("No parents found.");  
                    }  
                } catch (Exception $e){  
                    echo "Error: ". $e->getMessage() . "\n";  
@@ -348,41 +410,4 @@ function main() {
 }  
 
 main();
-/*Получение прямого родителя:
-SELECT * FROM neighbor_tree WHERE id = (SELECT parent_id FROM neighbor_tree WHERE id = 1);
-
-Получение всех родителей:
-WITH RECURSIVE parents AS (
-    SELECT * FROM neighbor_tree WHERE id = child_node_id_value
-    UNION ALL
-    SELECT nt.* FROM neighbor_tree nt INNER JOIN parents p ON nt.id = p.parent_id
-)
-SELECT * FROM parents;
-
-Получение прямых потомков:
-SELECT * FROM neighbor_tree WHERE parent_id = 1;
-
-Получение всех потомков:
-WITH RECURSIVE descendants AS (
-    SELECT * FROM neighbor_tree WHERE id = root_node_id_value
-    UNION ALL
-    SELECT nt.* FROM neighbor_tree nt INNER JOIN descendants d ON nt.parent_id = d.id
-)
-SELECT * FROM descendants;
-
-Удаление узла без поддерева:
-DELETE FROM neighbor_tree WHERE id = node_id_value;
-
-Удаление поддерева:
-DELETE FROM neighbor_tree WHERE id IN (SELECT id FROM neighbor_tree WHERE parent_id = subtree_root_id);
-
-Добавление листа:
-INSERT INTO neighbor_tree (title, parent_id) VALUES ('Новый продукт', parent_id_value);
-
-Удаление листа:
-DELETE FROM neighbor_tree WHERE id = leaf_id_value;
-
-
-*/
-
 
