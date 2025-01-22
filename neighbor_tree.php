@@ -74,7 +74,13 @@ class TreeCRUD {
 
     // Добавление листа
     public function addLeaf($title, $parentId) {
-        $trimmedTitle = trim($title);
+        $trimmedTitle = $this->mb_ucfirst(trim($title));
+        $trimmedTitle = preg_replace('/\s+/', ' ', $trimmedTitle);
+        $titleLenght = strlen($trimmedTitle);
+
+        if($titleLenght <= 1){
+            throw new InvalidArgumentException("Incorrect title.");
+        }
 
         if (preg_match('/[^a-zA-Zа-яА-ЯёЁ0-9 ,-]/u', $trimmedTitle)) {
             throw new InvalidArgumentException("Incorrect title.");
@@ -214,6 +220,8 @@ class TreeCRUD {
         }
     }
 
+    
+
     // Метод для отображения всего дерева
     public function displayTree() {
         $tree = $this->fetchTree();
@@ -332,8 +340,8 @@ function main() {
 
                 try {
                     if ($crud->retrieve(intval($nodeIdToDelete))) { 
-                    $crud->deleteNodeWithoutChildren(intval($nodeIdToDelete));
-                    echo "Node deleted.\n";
+                        $crud->deleteNodeWithoutChildren(intval($nodeIdToDelete));
+                        echo "Node deleted.\n";
                     }
                     else{
                         echo "Node not found.\n";
