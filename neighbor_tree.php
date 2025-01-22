@@ -11,6 +11,12 @@ class TreeCRUD {
         }
     }
 
+    public function mb_ucfirst($str, $encoding='UTF-8') {
+        $str = mb_strtolower($str, $encoding);
+        // Делаем первую букву заглавной
+        return mb_strtoupper(mb_substr($str, 0, 1, $encoding), $encoding) . mb_substr($str, 1, mb_strlen($str, $encoding), $encoding);
+    }
+
     public function _retrieve($results) {
         $header = [
             'id' => 'ID',
@@ -74,7 +80,7 @@ class TreeCRUD {
             throw new InvalidArgumentException("Incorrect title.");
         }
         // Проверка на существование названия
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM neighbor_tree WHERE (title = :title)");
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) FROM neighbor_tree WHERE (LOWER(title) = LOWER(:title))");
         $stmt->execute(['title' => $trimmedTitle]);
         $count = $stmt->fetchColumn();
 
@@ -132,28 +138,46 @@ class TreeCRUD {
 
     // Получение всех потомков
     public function getAllDescendants($id) {
-        // Рекурсивная функция для получения всех потомков
-        return $this->fetchDescendants($id);
+        $descendants = $this->fetchDescendants($id);
+        if (!empty($descendants)) {
+            echo "Found descendants:\n";
+            $this->printTree($descendants, $id);
+        } else {
+            throw new InvalidArgumentException("No descendants found.");
+        }
     }
 
-    private function fetchDescendants($parentId) {
+    private function fetchDescendants($parentId, &$visited = []) {
+        if (in_array($parentId, $visited)) {
+            return []; // Предотвращаем зацикливание
+        }
+        
+        $visited[] = $parentId; // Помечаем узел как посещенный
+        
         $children = [];
         $stmt = $this->pdo->prepare("SELECT * FROM neighbor_tree WHERE parent_id = :parent_id");
         $stmt->execute(['parent_id' => $parentId]);
-        
+    
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             // Добавляем текущий узел к потомкам
             $children[] = $row;
             // Рекурсивно добавляем потомков текущего узла
-            array_push($children, ...$this->fetchDescendants($row['id']));
+            array_push($children, ...$this->fetchDescendants($row['id'], $visited));
         }
-        
+    
         return $children;
     }
 
     // Получение всех родителей
     public function getAllParents($id) {
-        return $this->fetchParents($id);
+        $parents = $this->fetchParents($id);
+
+        if (!empty($parents)) {
+            // Переворачиваем массив, чтобы показать родителей от корня к текущему узлу
+            $this->printTree(array_reverse($parents));
+        } else {
+            throw new InvalidArgumentException("No parents found.");
+        }
     }
 
     private function fetchParents($childId) {
@@ -164,7 +188,6 @@ class TreeCRUD {
             $stmt->execute(['child_id' => $childId]);
             if ($parent = $stmt->fetch(PDO::FETCH_ASSOC)) {
                 array_unshift($parents, $parent);  // Добавляем в начало массива, чтобы сохранить порядок
-                // Обновляем childId для следующей итерации
                 $childId = $parent['id'];
             } else {
                 break;
@@ -180,7 +203,7 @@ class TreeCRUD {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Рекурсивная функция для печати дерева
+    // Рекурсивная функция для вывода дерева
     private function printTree($nodes, $parentId = null, $level = 0) {
         foreach ($nodes as $node) {
             if ($node['parent_id'] === $parentId) {
@@ -200,25 +223,25 @@ class TreeCRUD {
 
 function main() {
  
-    /*
     $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
         'dbname' => 'your_dbname',
         'user' => 'postgres',
         'password' => 'water7op'
-        ];
-        
-        
-    */
-    $dbConfig = [
-        'host' => 'localhost',
-        'port' => '5432',
-        'dbname' => 'postgres',
-        'user' => 'postgres',
-        'password' => 'ardin2004'
     ];
-    // Создаем экземпляр класса
+        
+        
+    /*
+        $dbConfig = [
+            'host' => 'localhost',
+            'port' => '5432',
+            'dbname' => 'postgres',
+            'user' => 'postgres',
+            'password' => 'ardin2004'
+        ];
+    */
+        // Создаем экземпляр класса
     $crud = new TreeCRUD($dbConfig);
     
     while (true) {
@@ -263,8 +286,13 @@ function main() {
                 }
                 
                 try {
-                    $crud->deleteLeaf(intval($leafIdToDelete));
-                    echo "Leaf deleted.\n";
+                    if ($crud->retrieve(intval($leafIdToDelete))){
+                        $crud->deleteLeaf(intval($leafIdToDelete));
+                        echo "Leaf deleted.\n";
+                    }
+                    else{
+                        echo "Leaf not fount\n";
+                    }
                 } catch (Exception $e) {
                     echo "Error: " . $e->getMessage() . "\n";
                 }
@@ -303,8 +331,13 @@ function main() {
                 }
 
                 try {
+                    if ($crud->retrieve(intval($nodeIdToDelete))) { 
                     $crud->deleteNodeWithoutChildren(intval($nodeIdToDelete));
                     echo "Node deleted.\n";
+                    }
+                    else{
+                        echo "Node not found.\n";
+                    }
                 } catch (Exception $e) {
                     echo "Error: " . $e->getMessage() . "\n";
                 }
@@ -366,15 +399,11 @@ function main() {
                }
 
                try { 
-                   $descendantsResults= $crud->getAllDescendants(intval($nodeIDForDescendants)); 
-                   if (!empty($descendantsResults)){ 
-                        $crud->_retrieve($descendantsResults);
-                   } else { 
-                       throw new InvalidArgumentException ("No descendants found."); 
-                   } 
-               } catch (Exception $e){ 
-                   echo "Error: ". $e->getMessage() . "\n"; 
-               }
+                $crud->getAllDescendants(intval($nodeIDForDescendants)); 
+                } catch (Exception $e) { 
+                    echo "Error: ". $e->getMessage() . "\n"; 
+                }
+
                break;
 
            case '9':
@@ -388,13 +417,8 @@ function main() {
                }
 
                try { 
-                   $parentsResults= $crud->getAllParents(intval($nodeIDForParents)); 
+                   $crud->getAllParents(intval($nodeIDForParents)); 
 
-                   if (!empty($parentsResults)){ 
-                        $crud->_retrieve($parentsResults);  
-                   } else {  
-                       throw new InvalidArgumentException ("No parents found.");  
-                   }  
                } catch (Exception $e){  
                    echo "Error: ". $e->getMessage() . "\n";  
                }  

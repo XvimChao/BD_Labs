@@ -11,35 +11,44 @@ class PathEnumCRUD {
         }
     }
 
-    // Метод для отображения всего дерева
-    public function displayTree() {
-        // Получаем все узлы дерева
-        $tree = $this->fetchTree();
-        // Печатаем дерево
-        echo "Дерево товаров:\n";
-        foreach ($tree as &$node) {
-            if ($node['path'] == '1/') {  // Проверяем корневой элемент
-                echo "{$node['title']} (ID: {$node['id']})\n";
-                foreach ($tree as &$childNode) {
-                    if (strpos($childNode['path'], "{$node['path']}") === 0 && $childNode['path'] !== "{$node['path']}") {
-                        echo "   └── {$childNode['title']} (ID: {$childNode['id']})\n";
-                    }
-                }
+    
+    // Получение всех узлов дерева
+    private function fetchTree() {
+        $stmt = $this->pdo->query("SELECT * FROM path_enum ORDER BY path");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    // Метод для отображения дерева
+    private function printTree($nodes, $parentPath = '1/', $level = 0) {
+        foreach ($nodes as $node) {
+            // Проверяем, является ли текущий узел дочерним по отношению к родительскому пути
+            if (strpos($node['path'], $parentPath) === 0 && $node['path'] !== $parentPath) {
+                echo str_repeat('   ', $level) . "└── " . $node['title'] . " (ID: " . $node['id'] . ")\n";
+                // Рекурсивный вызов для вывода потомков
+                $this->printTree($nodes, $node['path'], $level + 1);
             }
         }
     }
 
-    // Получение всех узлов дерева
-    private function fetchTree() {
-        $stmt = $this->pdo->query("SELECT * FROM path_enum");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    public function displayTree() {
+        $tree = $this->fetchTree(); 
+        $this->printTree($tree);
+    }
+
+    public function retrieve($id) {
+        $stmt = $this->pdo->prepare("SELECT * FROM path_enum WHERE id = :id");
+        $stmt->execute(['id' => $id]);
+        return $stmt->fetch();
     }
 
 
     // Добавление листа
     public function addLeaf($title, $parentPath) {
         // Генерируем новый путь
-        $newPath = $parentPath . nextval('path_enum_id_seq') . '/';
+        $stmt = $this->pdo->query("SELECT nextval('path_enum_id_seq') AS next_id");
+        $nextId = $stmt->fetchColumn();
+        $newPath = $parentPath . $nextId . '/';
+        
         $stmt = $this->pdo->prepare("INSERT INTO path_enum (title, path) VALUES (:title, :path)");
         $stmt->execute(['title' => $title, 'path' => $newPath]);
     }
@@ -124,7 +133,7 @@ class PathEnumCRUD {
 
 // Основная функция программы
 function main() {
-   /*
+   
     $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
@@ -132,9 +141,9 @@ function main() {
         'user' => 'postgres',
         'password' => 'water7op'
     ];
-    */
     
     
+   /* 
     $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
@@ -142,7 +151,7 @@ function main() {
         'user' => 'postgres',
         'password' => 'ardin2004'
     ];
-    
+    */
     $crud = new PathEnumCRUD($dbConfig);
    
    while (true) {

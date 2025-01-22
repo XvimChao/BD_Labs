@@ -4,7 +4,7 @@ CREATE TABLE neighbor_tree (
     id INT DEFAULT nextval('neighbor_tree_id_seq') PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     parent_id INT,
-    FOREIGN KEY (parent_id) REFERENCES neighbor_tree(id) ON DELETE CASCADE  -- Устанавливаем внешний ключ
+    FOREIGN KEY (parent_id) REFERENCES neighbor_tree(id) ON DELETE CASCADE
 );
 
 

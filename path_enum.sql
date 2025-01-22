@@ -6,7 +6,7 @@ CREATE TABLE path_enum (
     path VARCHAR(255) NOT NULL
 );
 
-INSERT INTO path_enum (title, path) VALUES 
+INSERT INTO path_enum (id, title, path) VALUES 
 (1, 'Товары', '1/'),
 (2, 'Электроника', '1/2/'),
 (3, 'ПК, ноутбуки, периферия', '1/2/3/'),
