@@ -423,7 +423,6 @@ function main() {
                    echo "Invalid Node ID.\n"; 
                    break; 
                }
-
                try { 
                    $crud->getAllParents(intval($nodeIDForParents)); 
 

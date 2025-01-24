@@ -1,13 +1,13 @@
-CREATE SEQUENCE catalog_tree_id_seq;
+CREATE SEQUENCE nested_sets_id_seq;
 
-CREATE TABLE catalog_tree (
-    id INT DEFAULT nextval('catalog_tree_id_seq') PRIMARY KEY,
+CREATE TABLE nested_sets (
+    id INT DEFAULT nextval('nested_sets_id_seq') PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     lft INT NOT NULL,
     rgt INT NOT NULL
 );
 
-INSERT INTO catalog_tree (id, title, lft, rgt) VALUES
+INSERT INTO nested_sets (id, title, lft, rgt) VALUES
 (1, 'Товары', 1, 47),
 (2, 'Электроника', 2, 23),
 (3, 'ПК, ноутбуки, периферия', 3, 17),
@@ -33,4 +33,4 @@ INSERT INTO catalog_tree (id, title, lft, rgt) VALUES
 (23, 'Напольные пылесосы', 40, 41),
 (24, 'Роботы пылесосы', 42, 43);
 
-SELECT setval('catalog_tree_id_seq', COALESCE((SELECT MAX(id) FROM catalog_tree), 0));
+SELECT setval('nested_sets_id_seq', COALESCE((SELECT MAX(id) FROM nested_sets), 0));

@@ -15,8 +15,11 @@ class UsersCRUD {
     // Создание пользователя
     public function createUser($username, $email, $password) {
         try {
-            $stmt = $this->pdo->prepare("CALL UserCreate(?, ?, ?)");
-            $stmt->execute([$username, $email, $password]);
+            $query = "
+                CALL UserCreate(:username,:email,:password)
+            ";
+            $stmt = $this->pdo->prepare($query);
+            $stmt->execute(['username' => $username, 'email' => $email, 'password' => $password]);
             echo "User created successfully.\n";
         } catch (PDOException $e) {
             echo "Error creating user: " . $e->getMessage() . "\n";
@@ -26,12 +29,29 @@ class UsersCRUD {
     // Получение всех пользователей
     public function retrieveAllUsers() {
         try {
-            $stmt = $this->pdo->query("SELECT * FROM users ORDER BY user_id");
-            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                print_r($row);
+            // Выполнение процедуры с курсором
+            $stmt = $this->pdo->query("CALL UserRetrieveAll()");
+            
+            // Проверка успешности выполнения
+            if ($stmt === false) {
+                throw new PDOException("Query execution failed");
             }
+            
+            // Вывод результатов в консоль
+            echo "Список пользователей:\n";
+            echo "-------------------\n";
+            
+            // Перебор результатов с помощью курсора
+            while ($user = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                echo "ID: {$user['user_id']}\n";
+                echo "Username: {$user['username']}\n";
+                echo "Email: {$user['email']}\n";
+                echo "-------------------\n";
+            }
+            
         } catch (PDOException $e) {
-            echo "Error retrieving users: " . $e->getMessage() . "\n";
+            error_log("Database Error: " . $e->getMessage());
+            throw $e;
         }
     }
 
@@ -101,7 +121,7 @@ class UsersCRUD {
 function main() {
     
     // Конфигурация базы данных
-    /*
+    
     $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
@@ -109,8 +129,8 @@ function main() {
         'user' => 'postgres',
         'password' => 'water7op'
     ];
-    */
     
+    /*
     $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
@@ -118,7 +138,7 @@ function main() {
         'user' => 'postgres',
         'password' => 'ardin2004'
     ];
-    
+    */
     // Создаем экземпляр класса
     $crud = new UsersCRUD($dbConfig);
     
