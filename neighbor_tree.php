@@ -230,7 +230,7 @@ class TreeCRUD {
 }
 
 function main() {
- 
+ /*
     $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
@@ -239,8 +239,8 @@ function main() {
         'password' => 'water7op'
     ];
         
-        
-    /*
+        */
+    
         $dbConfig = [
             'host' => 'localhost',
             'port' => '5432',
@@ -248,7 +248,7 @@ function main() {
             'user' => 'postgres',
             'password' => 'ardin2004'
         ];
-    */
+   
         // Создаем экземпляр класса
     $crud = new TreeCRUD($dbConfig);
     

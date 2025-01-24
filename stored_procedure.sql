@@ -1,3 +1,39 @@
+DROP SEQUENCE IF EXISTS user_id_seq CASCADE;
+
+CREATE SEQUENCE user_id_seq;
+
+DROP TABLE IF EXISTS users CASCADE;
+
+ 
+CREATE TABLE users (
+	user_id INT DEFAULT nextval('user_id_seq') PRIMARY KEY,
+	username VARCHAR(32) NOT NULL,
+	email VARCHAR(64) UNIQUE NOT NULL,
+	password VARCHAR(64) NOT NULL,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	CHECK(TRIM(username) <> ''),
+	CHECK(TRIM(email) <> '')
+);
+
+ 
+INSERT INTO users(user_id ,username,email,password ,created_at ) VALUES
+	(1 ,'user1' ,'primer1@gmail.com' ,'password1' ,'2024-01-10 00:00:00') ,
+	(2 ,'user2' ,'primer2@gmail.com' ,'password2' ,'2000-02-10 00:00:00') ,
+	(3 ,'user3' ,'primer3@gmail.com' ,'password3' ,'2015-03-10 00:00:00') ,
+	(4 ,'user4' ,'primer4@gmail.com' ,'password4' ,'2024-04-10 00:00:00') ,
+	(5 ,'user5' ,'primer5@gmail.com' ,'password5' ,'2024-05-10 00:00:00') ,
+	(6 ,'user6' ,'primer6@gmail.com' ,'password6' ,'2020-06-10 00:00:00') ,
+	(7 ,'user7' ,'primer7@gmail.com' ,'password7' ,'2024-07-02 00:00:00') ,
+	(8 ,'user8' ,'primer8@gmail.com' ,'password8' ,'2020-08-10 00:00:00') ,
+	(9 ,'user9' ,'primer9@gmail.com' ,'password9' ,'2023-01-09 00:00:00') ,
+	(10 ,'user10','primer10@gmail.com','password10','2024-01-10 00:00:00');
+
+
+SELECT setval('user_id_seq', COALESCE((SELECT MAX(user_id) FROM users), 0));
+
+CREATE EXTENSION IF NOT EXISTS citext;  
+ALTER TABLE users ALTER COLUMN email TYPE citext;  
+
 --Хранимая процедура для создания пользователя
 CREATE OR REPLACE PROCEDURE UserCreate(
     IN p_username VARCHAR(32),
@@ -39,7 +75,7 @@ AS $$
 DECLARE
     record users%ROWTYPE;
 BEGIN
-    FOR record IN SELECT * FROM users LOOP
+    FOR record IN SELECT * FROM users ORDER BY user_id LOOP
         RAISE NOTICE 'User: ID = %, Username = %, Email = %', record.user_id, record.username, record.email;
     END LOOP;
 EXCEPTION
