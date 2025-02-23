@@ -122,6 +122,7 @@ function main() {
     
     // Конфигурация базы данных
     
+    /*
     $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
@@ -129,8 +130,8 @@ function main() {
         'user' => 'postgres',
         'password' => 'water7op'
     ];
+    */
     
-    /*
     $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
@@ -138,7 +139,6 @@ function main() {
         'user' => 'postgres',
         'password' => 'ardin2004'
     ];
-    */
     // Создаем экземпляр класса
     $crud = new UsersCRUD($dbConfig);
     

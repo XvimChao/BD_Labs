@@ -340,7 +340,9 @@ class GenresCRUD {
 
 function main() {
     
+    
     // Конфигурация базы данных
+    /*
     $dbConfig = [
         'host' => 'localhost',
         'port' => '5432',
@@ -348,15 +350,15 @@ function main() {
         'user' => 'postgres',
         'password' => 'water7op'
     ];
-    /*
-    $dbConfig = [
-        'host' => 'localhost',
-        'port' => '5432',
-        'dbname' => 'postgres',
-        'user' => 'postgres',
-        'password' => 'ardin2004'
-    ];
     */
+    $dbConfig = [
+        'host' => 'dpg-cute50vnoe9s73990f8g-a.oregon-postgres.render.com',
+        'port' => '5432',
+        'dbname' => 'bd_hsl9',
+        'user' => 'bd_hsl9_user',
+        'password' => '3cU6xyUqpiR6UrSnaRelGS3erErjzIHO'
+    ];
+    
     // Создаем экземпляр класса
     $crud = new GenresCRUD($dbConfig);
     
