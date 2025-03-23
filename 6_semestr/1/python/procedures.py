@@ -17,12 +17,9 @@ def register_user(login, password, registration_date, family, name, patronymic, 
         account = Account(user_id=user.id, family=family, name=name, patronymic=patronymic, birth_date=birth_date)
         session.add(account)
 
-        # Завершение транзакции
         session.commit()
     except Exception as e:
-        # Откат транзакции в случае ошибки
         session.rollback()
         raise e
     finally:
-        # Закрытие сессии
         session.close()

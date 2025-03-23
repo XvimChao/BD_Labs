@@ -56,7 +56,7 @@ def main():
 
         if choice == "1":
             while True:
-                login = input("Логин: ").strip()
+                login = input("Логин: ").strip().replace(" ", "")
                 if not login:
                     print("Логин не может быть пустым. Попробуйте снова.")
                     continue
