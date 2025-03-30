@@ -1,31 +1,22 @@
 from logging.config import fileConfig
-
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-
 from alembic import context
-
 import os
 import sys
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from models import Base 
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
-config = context.config
+config = context.config # Объект конфигурации Alembic
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
-fileConfig(config.config_file_name)
-
-# add your model's MetaData object here
-# for 'autogenerate' support
-target_metadata = Base.metadata
+fileConfig(config.config_file_name) # Настройка логгирования
+target_metadata = Base.metadata # Метаданные для автогенерации миграций
 
 def run_migrations_offline():
-    """Run migrations in 'offline' mode."""
-    url = config.get_main_option("sqlalchemy.url")
+    """Оффлайн-миграции"""
+    url = config.get_main_option("sqlalchemy.url") # Получаем URL БД
     context.configure(
         url=url,
         target_metadata=target_metadata,
