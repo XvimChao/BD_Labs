@@ -1,4 +1,4 @@
-Flask
 SQLAlchemy
 Alembic
 psycopg2-binary
+psycopg2

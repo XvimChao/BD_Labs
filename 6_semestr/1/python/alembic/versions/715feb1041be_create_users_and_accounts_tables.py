@@ -24,16 +24,16 @@ def upgrade() -> None:
     op.create_table('users',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('login', sa.String(32), nullable=False),
-    sa.Column('password', sa.String(32), nullable=False),
+    sa.Column('password', sa.String(128), nullable=False),
     sa.Column('registration_date', sa.Date(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('login')
     )
     op.create_table('accounts',
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('family', sa.String(32), nullable=False),
-    sa.Column('name', sa.String(32), nullable=False),
-    sa.Column('patronymic', sa.String(32), nullable=True),
+    sa.Column('family', sa.String(64), nullable=False),
+    sa.Column('name', sa.String(64), nullable=False),
+    sa.Column('patronymic', sa.String(64), nullable=True),
     sa.Column('birth_date', sa.Date(), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('user_id')
