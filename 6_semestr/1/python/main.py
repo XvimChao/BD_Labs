@@ -2,8 +2,7 @@ from procedures import register_user
 from models import User, Session
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
-import getpass
-import re  # Для проверки букв в имени, фамилии и отчестве
+import re
 
 def is_valid_name(name):
     """Проверка, что строка содержит только буквы."""
@@ -12,7 +11,7 @@ def is_valid_name(name):
 def is_valid_birth_date(birth_date):
     """Проверка, что дата рождения корректна и человеку не больше 150 лет."""
     today = datetime.today()
-    min_birth_date = today - timedelta(days=150 * 365)  # 150 лет назад
+    min_birth_date = today - timedelta(days=150 * 365)
     return min_birth_date <= birth_date <= today
 
 def is_login_unique(login):
@@ -27,10 +26,10 @@ def format_name(name):
     return name.capitalize()
 
 def get_secure_password():
-    """Безопасный ввод пароля с подтверждением."""
+    """Безопасный ввод пароля с подтверждением (видимый ввод)."""
     while True:
-        password = getpass.getpass("Пароль: ")
-        confirm = getpass.getpass("Подтвердите пароль: ")
+        password = input("Пароль: ")
+        confirm = input("Подтвердите пароль: ")
         
         if password != confirm:
             print("Пароли не совпадают. Попробуйте снова.")
@@ -45,7 +44,23 @@ def get_secure_password():
             continue
             
         return password
+    
+def get_valid_birth_date():
+    while True:
+        try:
+            year = int(input("Год рождения (ГГГГ): "))
+            month = int(input("Месяц рождения (1-12): "))
+            day = int(input("День рождения (1-31): "))
 
+            birth_date = datetime(year, month, day)
+            
+            if not is_valid_birth_date(birth_date):
+                print("Дата рождения некорректна. Попробуйте снова.")
+                continue
+                
+            return birth_date
+        except ValueError:
+            print("Некорректная дата. Пожалуйста, введите числа для дня, месяца и года.")
     
 # Настройка хэширования паролей
 pwd_context = CryptContext(
@@ -73,11 +88,11 @@ def print_all_users():
         user_data = [
             str(user.id),
             user.login,
-            user.registration_date.strftime("%Y-%m-%d"),
-            user.account.family if user.account else "N/A",
-            user.account.name if user.account else "N/A",
-            user.account.patronymic if user.account and user.account.patronymic else "N/A",
-            user.account.birth_date.strftime("%Y-%m-%d") if user.account else "N/A"
+            user.registration_date.strftime("%d-%m-%Y"),
+            user.account.family if user.account else "-",
+            user.account.name if user.account else "-",
+            user.account.patronymic if user.account and user.account.patronymic else "-",
+            user.account.birth_date.strftime("%d-%m-%Y") if user.account else "-"
         ]
         all_user_data.append(user_data)
     
@@ -175,15 +190,20 @@ def main():
                 break
 
             while True:
-                birth_date = input("Дата рождения (ДД-ММ-ГГГГ): ").strip()
                 try:
-                    birth_date = datetime.strptime(birth_date, "%d-%m-%Y")
+                    day = int(input("День рождения: "))
+                    month = int(input("Месяц рождения: "))
+                    year = int(input("Год рождения: "))
+
+                    birth_date = datetime(year, month, day)
+                    
                     if not is_valid_birth_date(birth_date):
-                        print("Дата рождения некорректна.Попробуйте снова.")
+                        print("Дата рождения некорректна. Попробуйте снова.")
                         continue
+                        
                     break
                 except ValueError:
-                    print("Неверный формат даты. Используйте формат ДД-ММ-ГГГГ. Попробуйте снова.")
+                    print("Некорректная дата. Пожалуйста, введите числа для дня, месяца и года.")
 
             try:
                 register_user(login, hashed_password, datetime.now(), family, name, patronymic, birth_date)
