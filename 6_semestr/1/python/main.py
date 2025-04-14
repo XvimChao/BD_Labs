@@ -4,15 +4,67 @@ from datetime import datetime, timedelta
 from passlib.context import CryptContext
 import re
 
+
+def is_valid_fio(name, is_family):
+    """Проверка, что строка соответствует допустимым значениям."""
+    
+    #  Проверка первого/последнего символа для фамилии
+    if is_family:
+        if name[0] in  {'.', '-', "'", ' ', ','} or name[-1] in {'.', '-', "'", ' ', ','}:
+            return False
+        if name[0] == ')' or name[-1] == '(':
+            return False
+        if name == '.' or name == '-' or name == "'" or name == ' ' or name == ',':
+            return False
+        if name == ')' or name == '(':
+            return False
+    
+    # Проверка первого/последнего символа для имени/отчества
+    else:
+        if name[0] in {'-', "'", ' ', ','} or name[-1] in {'-', "'", ' ', ','}:
+            return False
+        if name[0] == '.':
+            return False
+        if name[0] == ')' or name[-1] == '(':
+            return False
+        if name in {'-', "'", ' ', ',', '.', ')', '('}:
+            return False
+    
+    # Проверка на два и более подряд специальных символов
+    special_chars = {'.', '-', "'", ' ', ',', '(', ')'}
+    prev_char = None
+    for char in name:
+        if char in special_chars and prev_char in special_chars:
+            return False
+        prev_char = char
+    
+    # Проверка на недопустимые последовательности символов
+    restricted_sequences = ['.', '-', "'", ',', '(', ')']
+    for i in range(len(name)-1):
+        if name[i] in restricted_sequences and name[i+1] in restricted_sequences:
+            return False
+    
+    # Проверка на непарные скобки
+    if ('(' in name and ')' not in name) or (')' in name and '(' not in name):
+        return False
+    
+    return True
+
+def is_valid_family(family):
+    return is_valid_fio(family, is_family = True)
+
 def is_valid_name(name):
-    """Проверка, что строка содержит только буквы."""
-    return bool(re.match("^[A-Za-zА-Яа-я]+$", name))
+    return is_valid_fio(name, is_family = False)
+
+def is_valid_patronymic(patronymic):
+    return is_valid_fio(patronymic, is_family=False)
 
 def is_valid_birth_date(birth_date):
     """Проверка, что дата рождения корректна и человеку не больше 150 лет."""
     today = datetime.today()
-    min_birth_date = today - timedelta(days=150 * 365)
+    min_birth_date = today - timedelta(days=((150/4)*3) * 365 + 150/4 * 366)
     return min_birth_date <= birth_date <= today
+    # Пересчитать
 
 def is_login_unique(login):
     """Проверка, что логин уникален."""
@@ -61,33 +113,17 @@ def get_valid_birth_date():
             return birth_date
         except ValueError:
             print("Некорректная дата. Пожалуйста, введите числа для дня, месяца и года.")
-    
-# Настройка хэширования паролей
-pwd_context = CryptContext(
-    schemes=["pbkdf2_sha256"],
-    default="pbkdf2_sha256",
-    pbkdf2_sha256__default_rounds=30000
-)
-
-def hash_password(password: str) -> str:
-    """Хэширование пароля перед сохранением в БД"""
-    return pwd_context.hash(password)
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Проверяет пароль против хэша."""
-    return pwd_context.verify(plain_password, hashed_password)
-
 
 def print_all_users():
     session = Session()
     users = session.query(User).all()
     
-    # Собираем все данные пользователей в список списков
     all_user_data = []
     for user in users:
         user_data = [
             str(user.id),
             user.login,
+            user.password,
             user.registration_date.strftime("%d-%m-%Y"),
             user.account.family if user.account else "-",
             user.account.name if user.account else "-",
@@ -103,7 +139,7 @@ def print_all_users():
         return
     
     # Определяем ширину каждого столбца
-    headers = ["ID", "Логин", "Дата регистрации", "Фамилия", "Имя", "Отчество", "Дата рождения"]
+    headers = ["ID", "Логин", "Пароль", "Дата регистрации", "Фамилия", "Имя", "Отчество", "Дата рождения"]
     num_columns = len(headers)
     
     # Инициализируем список с максимальными длинами (начинаем с длин заголовков)
@@ -128,7 +164,7 @@ def main():
         print("\n1. Зарегистрировать пользователя")
         print("2. Показать всех пользователей")
         print("3. Выйти")
-        choice = input("Выберите действие: ")
+        choice = input("Выберите действие: ").strip()
 
         if choice == "1":
             while True:
@@ -140,13 +176,12 @@ def main():
                     print("Логин не может быть длиннее 32 символов. Попробуйте снова.")
                     continue
                 if not is_login_unique(login):
-                    print("Логин уже существует. Пожалуйста, выберите другой логин.")
+                    print("Логин уже существует. Выберите другой.")
                     continue
                 break
 
            
             password = get_secure_password()
-            hashed_password = hash_password(password)
                 
 
             while True:
@@ -157,8 +192,8 @@ def main():
                 if len(family) > 64:
                     print("Фамилия не может быть длиннее 64 символов. Попробуйте снова.")
                     continue
-                if not is_valid_name(family):
-                    print("Фамилия должна содержать только буквы. Попробуйте снова.")
+                if not is_valid_family(family):
+                    print("Фамилия некорректна. Попробуйте снова.")
                     continue
                 family = format_name(family)
                 break
@@ -168,11 +203,11 @@ def main():
                 if not name:
                     print("Имя не может быть пустым. Попробуйте снова.")
                     continue
-                if len(name) < 2 or len(name) > 64:
-                    print("Имя должно содержать от 2 до 64 символов. Попробуйте снова.")
+                if len(name) > 64:
+                    print("Имя не может быть длиннее 64 символов. Попробуйте снова.")
                     continue
                 if not is_valid_name(name):
-                    print("Имя должно содержать только буквы. Попробуйте снова.")
+                    print("Имя некорректно. Попробуйте снова.")
                     continue
                 name = format_name(name)
                 break
@@ -180,11 +215,11 @@ def main():
             while True:
                 patronymic = input("Отчество: ").strip()
                 if patronymic:
-                    if len(patronymic) < 3 or len(patronymic) > 64:
-                        print("Отчество должно содержать от 3 до 64 символов. Попробуйте снова.")
+                    if len(patronymic) > 64:
+                        print("Отчество не может быть длиннее 64 символов. Попробуйте снова.")
                         continue
-                    if not is_valid_name(patronymic):
-                        print("Отчество должно содержать только буквы. Попробуйте снова.")
+                    if not is_valid_patronymic(patronymic):
+                        print("Отчество некорректно. Попробуйте снова.")
                         continue
                     patronymic = format_name(patronymic)
                 break
@@ -206,7 +241,7 @@ def main():
                     print("Некорректная дата. Пожалуйста, введите числа для дня, месяца и года.")
 
             try:
-                register_user(login, hashed_password, datetime.now(), family, name, patronymic, birth_date)
+                register_user(login, password, datetime.now(), family, name, patronymic, birth_date)
                 print("Пользователь успешно зарегистрирован!")
             except Exception as e:
                 print(f"Ошибка: {e}")
