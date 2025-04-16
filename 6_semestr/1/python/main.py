@@ -97,26 +97,6 @@ def is_login_unique(login):
 def format_name(name):
     """Первая буква заглавная, остальные строчные."""
     return name.capitalize()
-
-def get_secure_password():
-    """Безопасный ввод пароля с подтверждением (видимый ввод)."""
-    while True:
-        password = input("Пароль: ")
-        confirm = input("Подтвердите пароль: ")
-        
-        if password != confirm:
-            print("Пароли не совпадают. Попробуйте снова.")
-            continue
-            
-        if len(password) < 6:
-            print("Пароль должен содержать минимум 6 символов.")
-            continue
-            
-        if len(password) > 64:
-            print("Пароль не должен превышать 64 символа.")
-            continue
-            
-        return password
     
 def get_valid_birth_date():
     while True:
@@ -201,9 +181,22 @@ def main():
                     continue
                 break
 
-           
-            password = get_secure_password()
+            while True:
+                password = input("Пароль: ")
+                confirm = input("Подтвердите пароль: ")
                 
+                if password != confirm:
+                    print("Пароли не совпадают. Попробуйте снова.")
+                    continue
+                    
+                if len(password) < 6:
+                    print("Пароль должен содержать минимум 6 символов.")
+                    continue
+                    
+                if len(password) > 64:
+                    print("Пароль не должен превышать 64 символа.")
+                    continue
+                break
 
             while True:
                 family = input("Фамилия: ").strip()
