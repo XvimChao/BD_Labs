@@ -8,6 +8,16 @@ import re
 def is_valid_fio(name, is_family):
     """Проверка, что строка соответствует допустимым значениям."""
     
+    # Недопустимые символы
+    forbidden_chars = (
+        "0123456789"
+        "!\"#$%&*+/:;<=>?@[\\]^_`{|}~"
+    )
+    
+    # Проверка на недопустимые символы
+    if any(c in forbidden_chars for c in name):
+        return False
+
     #  Проверка первого/последнего символа для фамилии
     if is_family:
         if name[0] in  {'.', '-', "'", ' ', ','} or name[-1] in {'.', '-', "'", ' ', ','}:
@@ -59,12 +69,23 @@ def is_valid_name(name):
 def is_valid_patronymic(patronymic):
     return is_valid_fio(patronymic, is_family=False)
 
+# Old
 def is_valid_birth_date(birth_date):
     """Проверка, что дата рождения корректна и человеку не больше 150 лет."""
     today = datetime.today()
-    min_birth_date = today - timedelta(days=((150/4)*3) * 365 + 150/4 * 366)
+    
+    # Рассчитываем минимальную допустимую дату рождения (150 лет)
+    min_birth_date = today.replace(year=today.year - 150)
+    
+    # Корректируем, если текущая дата - 29 февраля, а год не високосный
+    if today.month == 2 and today.day == 29 and not is_leap(today.year):
+        min_birth_date = today.replace(year=today.year - 150, month=3, day=1)
+    
     return min_birth_date <= birth_date <= today
-    # Пересчитать
+
+def is_leap(year):
+    """Проверка, является ли год високосным"""
+    return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
 
 def is_login_unique(login):
     """Проверка, что логин уникален."""
