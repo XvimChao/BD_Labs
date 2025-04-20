@@ -1,7 +1,6 @@
 from procedures import register_user
 from models import User, Session
-from datetime import datetime, timedelta
-from passlib.context import CryptContext
+from datetime import datetime, date
 import re
 
 
@@ -69,17 +68,15 @@ def is_valid_name(name):
 def is_valid_patronymic(patronymic):
     return is_valid_fio(patronymic, is_family=False)
 
-# Old
 def is_valid_birth_date(birth_date):
-    """Проверка, что дата рождения корректна и человеку не больше 150 лет."""
     today = datetime.today()
     
-    # Рассчитываем минимальную допустимую дату рождения (150 лет)
     min_birth_date = today.replace(year=today.year - 150)
-    
-    # Корректируем, если текущая дата - 29 февраля, а год не високосный
     if today.month == 2 and today.day == 29 and not is_leap(today.year):
         min_birth_date = today.replace(year=today.year - 150, month=3, day=1)
+    
+    if isinstance(birth_date, date) and not isinstance(birth_date, datetime):
+        birth_date = datetime.combine(birth_date, datetime.min.time())
     
     return min_birth_date <= birth_date <= today
 
