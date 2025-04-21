@@ -4,8 +4,8 @@ from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import create_engine
 
 # Подключение к базе данных
-DATABASE_URL = "postgresql://xvimbd_user:UDPRiSHBtXqCChTFYFDy1D4X7hwndshH@dpg-cvklan15pdvs73cgg7jg-a.oregon-postgres.render.com/xvimbd"
-# DATABASE_URL = "postgresql://postgres:ardin2004@localhost/your_dbname"
+# DATABASE_URL = "postgresql://xvimbd_user:UDPRiSHBtXqCChTFYFDy1D4X7hwndshH@dpg-cvklan15pdvs73cgg7jg-a.oregon-postgres.render.com/xvimbd"
+DATABASE_URL = "postgresql://postgres:ardin2004@localhost/your_dbname"
 engine = create_engine(DATABASE_URL)
 
 # Создание сессии

@@ -1,6 +1,7 @@
 from procedures import register_user
 from models import User, Session
 from datetime import datetime, date
+from dateutil.relativedelta import relativedelta
 import re
 
 
@@ -69,14 +70,15 @@ def is_valid_patronymic(patronymic):
     return is_valid_fio(patronymic, is_family=False)
 
 def is_valid_birth_date(birth_date):
-    today = datetime.today()
+    today = date.today()
     
-    min_birth_date = today.replace(year=today.year - 150)
+    if isinstance(birth_date, datetime):
+        birth_date = birth_date.date()
+
+    min_birth_date = today - relativedelta(years=150)
+
     if today.month == 2 and today.day == 29 and not is_leap(today.year):
-        min_birth_date = today.replace(year=today.year - 150, month=3, day=1)
-    
-    if isinstance(birth_date, date) and not isinstance(birth_date, datetime):
-        birth_date = datetime.combine(birth_date, datetime.min.time())
+        min_birth_date = min_birth_date.replace(month=3, day=1)
     
     return min_birth_date <= birth_date <= today
 
