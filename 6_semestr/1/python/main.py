@@ -181,7 +181,7 @@ def main():
                 break
 
             while True:
-                password = input("Пароль: ")
+                password = input("Пароль [минимум 6 символов]: ")
                 confirm = input("Подтвердите пароль: ")
                 
                 if password != confirm:
